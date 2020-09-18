@@ -1,0 +1,222 @@
+@forward "./main.scss";
+@use "./main.scss" as *;    
+div, input{
+    color:black;    
+}
+div{
+    margin: 0.1%;    
+    padding: 10px;
+}
+#pathPanel{
+    margin: 0;    
+    padding: 0px;
+    height: 20px;
+    transform: translateY(-15px);
+    position:absolute;
+    top:0px; 
+    left: 0px;
+    width:100vw;
+    background-color: $a;
+    overflow:hidden;
+    color:white;
+    transition-duration: 100ms;
+}
+#pathPanel:hover{
+    transform:translateY(0px);
+    height: 20px;    
+}
+.col, .row{
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.24);
+}
+.col{    
+    width: 320px;
+    background-color: #f3f3f3;    
+    margin: 10px;
+    height:auto;
+    min-height: 200px;
+    margin-bottom: auto;    
+    padding-bottom: 35px;
+    position: relative;
+}
+.colName{    
+    margin: 5px;
+    text-align:center;
+    background-color: $a;
+    color: white;
+}
+.row{    
+    width: 94%;
+    margin-top:2%;
+    background-color: white;    
+    position:relative;
+}
+.addCol{    
+    margin: 10px;    
+    opacity: 0.6;
+    //display:inline;
+    height: 220px;
+    width: 100px;
+    zborder-radius: 40%;    
+}
+.addRow{
+    background-color: rgba(170, 170, 170, 0.267); 
+    text-align: center;
+    width:90%;
+    height: 30px;
+    position:absolute;
+    bottom: 5px;
+    left:5%;
+    border: none;
+    box-shadow: 0 1px 1px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.24);
+    opacity: 0.8
+}
+.addRow:hover{
+    opacity: 1;
+}
+.cards{
+    width: 100%;
+    height: 100%;
+    outline: solid 2px $b;
+    //display:relative;
+    display:flex;
+}
+.zoom, .delete{
+    opacity: 0.4;
+    position:absolute;    
+    top:5px
+}
+.zoom{
+    right:35px
+} 
+.delete{
+right:5px
+}
+.over{
+    outline: 3px dotted white;
+}
+
+/* COLLAPSIBLE : for sub-event list, and description */
+.collapsible {  
+    cursor: pointer;
+    padding: 1px;
+    width: 100%;
+    border: none;  
+    outline: none;
+}
+.active, .collapsible:hover {
+    background-color: #ddd;
+}
+.collapsible:before {
+    content: '\002B';
+    color:black;
+    font-weight: bold;
+    float: left;
+    margin-left: 5px;
+}
+.active:before {
+    content: "\2212";
+}
+.content {      
+    zoverflow: hidden;
+    padding: 0px;
+    ztransition: max-height 0.2s ease-out;
+    background-color: #f1f1f1;  
+}
+.subEvent{
+    font-size: 8px;
+}
+.column-drag-handle {
+    cursor: move;
+    padding: 0px;    
+    text-align:center;
+    margin:auto;
+    position:relative;
+}
+
+textarea{    
+    resize: none;
+    overflow: hidden;
+    min-height: 50px;    
+    border:none;
+    background-color:#0000;
+    width:100%;
+}
+
+.drag{
+ pointer-events: none;
+}
+.dropAreaCol{
+    //visibility:hidden;
+    opacity:0.7;
+    //border: red 1px solid;
+    position:absolute;
+    margin:0px;
+    padding: 0px;
+    width:140px;
+    height:100%;
+    left: 280px;
+    top: -2px;
+    z-index:20;
+}
+.dropAreaRow{
+   // visibility:hidden;
+    opacity:0.7;
+    //border: red 1px solid;
+    position:absolute;
+    margin:0px;
+    padding: 0px;
+    width:100%;
+    height:25px;
+    left: -2px;
+    top: 30px;
+    z-index:21;
+}
+.colSpacer{    
+    transition: 150ms;
+    margin-right:80px;        
+}
+.rowSpacer{    
+    margin-bottom:30px;    
+}
+.card-ghost {
+    transition: transform 0.18s ease;
+    transform: rotateZ(5deg)
+}
+.phantomCol{
+    width:0px;
+    color:orange;
+    position:relative;
+    padding:0px;
+}
+.dropAreaColFirst{
+    //visibility:hidden;
+    opacity:0.7;
+    //border: red 1px solid;
+    position:absolute;
+    margin:0px;
+    padding: 0px;
+    width:140px;
+    height:100%;
+    left: 0px;
+    top: -2px;
+    z-index:20;
+}
+.phantomRow{
+    height:0px;
+    padding:0px;
+    color:orange;
+    position:relative;
+}
+.dropAreaRowFirst{
+    // visibility:hidden;
+    opacity:0.7;
+    //background-color: #66666622;
+    position:absolute;
+    margin:0px;
+    padding: 0px;
+    width:100%;
+    height:25px;
+    left: -2px;
+    top: -2px;
+    z-index:21;
+}

@@ -1,0 +1,47 @@
+@forward "./consts.scss";
+@use "./consts.scss" as *;
+#background{
+    height: 100%;
+    width: 100%;  
+    background-color: $back;        
+    z-index: -1;   
+    position: fixed;      
+}
+#app {
+    position: absolute;    
+    margin: 0vh 0;    
+    height: 100%;
+    width: 100%;  
+    background-color: $back;        
+    z-index: -1;     
+}
+.background{
+    background-color: $back;        
+}
+body{
+    margin:0;      
+    //color:white
+}
+body::-webkit-scrollbar {
+        display: none;
+}
+       
+:not(textarea):not(input):not(svg){       
+    -webkit-user-select: none;
+    cursor: default;
+}
+input{
+    //color:white;
+    //background-color:#0000;
+    border:none;     
+}
+textarea:focus, input:focus{
+    outline:none;
+}
+@mixin gridInput{    
+    font-size:20px;
+    text-align:center;    
+    margin:auto;
+    font-weight:bold;
+    word-break: break-all;
+}
