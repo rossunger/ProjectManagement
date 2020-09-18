@@ -2,7 +2,7 @@ import axios from "axios";
 import utf8 from "utf8";
 
 //const url= "http://localhost:5000/api/dc/";
-const url = "http://chartsbackend.herokuapp.com/api/dc/"
+const url = "https://chartsbackend.herokuapp.com/api/dc/"
 
 class PostService {
   static async getChart(ChartName) {
