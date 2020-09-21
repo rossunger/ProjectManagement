@@ -1,11 +1,13 @@
 @forward "./consts.scss";
 @use "./consts.scss" as *;
-#background{
-    height: 100%;
-    width: 100%;  
+.background{
+    height: fit-content; 
+    min-height: 100%;
+    width: fit-content;
+    min-width: 100%;  
     background-color: $back;        
     z-index: -1;   
-    position: fixed;      
+    //position: fixed;      
 }
 #app {
     position: absolute;    

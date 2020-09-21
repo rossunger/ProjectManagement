@@ -14,8 +14,10 @@ function setState(state, newState){
 
 export default createStore({    
     state:{  
+        updating: false,
+        loading:false,
         view: "All",
-        viewMode: 'cards',
+        viewMode: 'calendar',
         viewFilters:{
             filters: ['leader','type', 'done', 'current', 'parent', 'tags'],            
             leader: [],
@@ -26,10 +28,10 @@ export default createStore({
             tags: [],
         },
         viewRoot: -1,
-        lastId: -1,       
+        lastId: 0,       
         tasks:[
             
-        ],
+        ],        
         taskTypes: ['Make a list', 'Draft some text', 'Go Somewhere',
         'Pick dates/times', 'Watch/Read/Listen/Practice/Study', 'Contact someone',
         'Edit audio/video/image', 'Provide feedback', 'Brainstorm', 'Make/Move thing(s)', 
@@ -38,24 +40,30 @@ export default createStore({
         undos: [],
         redos: [],
     },
-    getters:{     
+    getters:{  
+        taskById: (state,getters) => (id) =>{
+            if (id==-1) return state            
+            return getters.allTasks.find(t=>t.id==id) || state
+        },
         viewRoot: (state,getters) => {
             if (state.viewRoot ==-1) return state
             return getters.allTasks.find(t=>t.id==state.viewRoot) || state
         },
-        tasksByDate: (state,getters) => {
-            let ret = getters.allTasks.filter(t=>{return t.due}).sort(function(a,b){                                
+        tasksByDate: (state,getters) => {            
+            let ret = getters.allTasks.filter(t=>{return t.due})            
+            ret = ret.sort(function(a,b){                                
                 if (!b.due)return false
-                return new Date(b.due) - new Date(a.due);
+                return new Date(b.due).getTime() - new Date(a.due).getTime();
               });              
             return ret
         },
-        getTasksOnDate: (state,getters) => (m, d)=>{            
-            return getters.tasksByDate.filter((t)=>{                
-                debugger
-                let b = dayjs(t.due).isSame('2020-'+m+'-'+d, 'day')
-                if (b) debugger
-                return b
+        getTasksOnDate: (state,getters) => (d)=>{                        
+            return getters.tasksByDate.filter((t)=>{                                                
+                  
+                let y = new Date(t.due).getFullYear() == d.getFullYear()
+                let m = new Date(t.due).getMonth() == d.getMonth()
+                let dd = new Date(t.due).getDate() == d.getDate()                  
+                return( y && m && dd )
             })                        
         },
         allTasks: (state) =>{            
@@ -80,10 +88,10 @@ export default createStore({
         }
     },
     actions:{
-        undo({state}){
+        /*undo({state}){
             debugger
             if (state.undos.length>0){                      
-                state.redos.push(arson.stringify(state.tasks))          
+                state.redos.push(arson.stringify({tasks: state.tasks, lastId: state.lastId}))          
                 state.tasks = arson.parse(state.undos.pop())
                 //state.tasks = []
                 //console.log(state.tasks.length)                
@@ -98,34 +106,23 @@ export default createStore({
             }
             else
                 console.log('nothing left to redo!')
-        },
+        },*/
         addUndo({state, dispatch}){                      
-            state.undos.push(arson.stringify(state.tasks))
-            dispatch('saveChart')  
+            //state.undos.push(arson.stringify(state.tasks))            
+        },                
+        async loadChart({state}, data){            
+            state.loading = true
+            data ? data = arson.parse(data) : data = arson.parse(await PostService.getChart('current'))        
+            state.tasks = data.tasks
+            state.lastId = data.lastId
         },
-        async saveChart({state}) {  
-            let txt = arson.stringify(state) 
-            console.log(txt)           
-            let ss;
-            try {                
-                ss = await PostService.updateChart('current', txt);                        
-              } catch(err) {            
-                alert(err); // TypeError: failed to fetch
-            }                  
-            if(ss.status!=201) console.error(`error ${ss.statusText}`)                                                    
-            console.log('Updated chart!')
-        },
-        async loadChart({state}){
-            const s = await PostService.getChart('current')                        
-            setState(state,arson.parse(s))
-        },
-        createTask({dispatch, state}, {name, parent=state, due}){
-            let id = parent.tasks.push(_.cloneDeep(TaskTemplate)) - 1            
-            parent.tasks[id].name = name || "newTask"
-            parent.lastId += 1
-            parent.tasks[id].id= parent.lastId
-            parent.tasks[id].parent=parent     
-            if (due) parent.tasks[id].due=due
+        createTask({dispatch, state}, {name, parent=state, due}){          
+            let i = parent.tasks.push(_.cloneDeep(TaskTemplate)) - 1                        
+            parent.tasks[i].name = name || "newTask"
+            state.lastId += 1
+            parent.tasks[i].id= state.lastId
+            parent.tasks[i].parent=parent     
+            if (due) parent.tasks[i].due=due
 
             dispatch('addUndo')
         },   
@@ -135,6 +132,27 @@ export default createStore({
 
             dispatch('addUndo')
         },
-        
+        reorderTask({state,getters,dispatch}, {taskId, positionId}){            
+            let t = getters.taskById(taskId)
+            let ti = t.parent.tasks.indexOf(t)
+            let i=0;
+            let p;
+            if (positionId != 0)
+            {
+                p = getters.taskById(positionId)
+                i = p.parent.tasks.indexOf(p)
+                if (i < ti) i++ 
+            }
+            let task = t.parent.tasks.splice(ti, 1)[0]            
+            t.parent.tasks.splice(i, 0, task)            
+            dispatch('addUndo')
+        },
+        deleteTask({dispatch}, task){            
+            task.parent.tasks.splice(task.parent.tasks.indexOf(task),1)
+            dispatch('addUndo')
+        },
+        deleteTaskById({dispatch, getters}, taskId){
+            dispatch('deleteTask', getters.taskById(taskId))
+        },               
     }
 })

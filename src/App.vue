@@ -1,120 +1,95 @@
 <template>    
-    <div id="app" @scroll.prevent="">        
-        <div @click.self="menu=!menu" style="position:fixed; padding: 7px; color:white; z-index:20">||||                    
-            <button v-if="menu" @click="setAllTasks">All Tasks</button>
-            <button v-if="menu" @click="setCurrentTasks">Current Tasks</button>
-            <button v-if="menu" @click="SetDoneTasks">Completed Tasks</button>        
-            <select multiple v-if="menu" @change="task.type=$event.target.value">
-                <option v-for="type in $store.state.taskTypes" :key="type" :value="type">{{type}}</option>
-            </select>                        
-            <select multiple v-if="menu" @change="task.leader=$event.target.value">
-                <option v-for="people in $store.state.people" :key="people" :value="people">{{people}}</option>
-            </select>
-            <button v-if="menu" @click="$store.state.viewMode='cards'">Cards</button>
-            <button v-if="menu" @click="$store.state.viewMode='tree'">Tree</button>
-            <button v-if="menu" @click="$store.state.viewMode='calendar'">Calendar</button>
-            <button v-if="menu" @click="$store.state.viewRoot=-1">ResetViewRoot</button>
+    <div id="app" @scroll.prevent=""> 
+        <!--div style="width: 100vw; height:100vh; background-color:black" v-if="$store.state.updating">UPDATING</div-->
+        <!--button @click="sendSocket('test')">SEND SOCKET</button-->       
+        <div>
+            <span style="color:white" @click.self="menu=!menu" v-if="!menu">||||  </span>        
+            <button class="rootNav" v-for="root in viewRootPath" :key="root" @click="allowTransition=false; $store.state.viewRoot=root">{{$store.getters.taskById(root).name || '🏠'}}</button>
+            <span style="color:white">&nbsp;{{$store.getters.viewRoot.name || '🏠'}}</span>
         </div>
-        <!-- CARD VIEW -->
-        <div v-if="$store.state.viewMode=='cards'" style="display:flex; flex-wrap: wrap;  margin:25px;">
-            <button style="position:fixed; top: 10px; right:10px; width:100px; height:100px; opacity:0.5" @click="$store.dispatch('createTask', {name:'newTask'})">+</button>
-            <div class="task" @mousedown="mouseDown($event, task)" :style="{backgroundColor: task.color, opacity: task.done ? 0.5 : 1}" v-for="task in tasksTree" :key="task">
-                <!--input type="checkbox" :checked="task.done" @click="task.done=!task.done"-->
-                <input class="big-input" @input="task.name=$event.target.value" :value="task.name">
-                <input type="color" :value="task.color" @input="task.color=$event.target.value">
-                <br>
-                <!--v-select label="name" :options="$store.state.tasks"></v-select-->
-                <!--select @change="task.parentId=$event.target.value">
-                    <option v-for="parent in $store.state.tasks" :key="parent" :value="parent">{{$store.getters.Task(parent)}}</option>
-                </select-->                        
-                <select @change="task.type=$event.target.value">
+        <div @click.self="menu=!menu" v-if="menu" class="menu">
+                <h1>Filters</h1>
+                <select multiple @input="$store.state.viewFilters.done=Array.from($event.target.selectedOptions, option => option.value == 'to do' ? false : option.value == 'done' ? true : '');">
+                    <option v-for="done in ['to do', 'done']" :key="done" :value="done">{{done}}</option>
+                </select> 
+                <input type="checkbox" value="done">                
+                Task Types:
+                <select multiple @change="$store.state.viewFilters.type=Array.from($event.target.selectedOptions, option => option.value);">
                     <option v-for="type in $store.state.taskTypes" :key="type" :value="type">{{type}}</option>
-                </select>            
-                
-                <select @change="task.leader=$event.target.value">
+                </select> 
+                <br>
+                Leaders:                       
+                <select multiple @change="$store.state.viewFilters.leader=Array.from($event.target.selectedOptions, option => option.value);">
                     <option v-for="people in $store.state.people" :key="people" :value="people">{{people}}</option>
                 </select>
                 <br>
-                <label class="dateButton">
-                    <input type="date" class="dateButton" @change="task.due=$event.target.value">
-                    <button id="calendar_text" class="dateButton">📅</button>
-                </label>
-                Due in: {{ task.due ? (new Date(task.due).getDate() - new Date().getDate()) + 1 : "" }} days                
-                
-                <br>
-                Excitement:<input class="number" type="number" :value="task.excitement" @input="task.excitement=$event.target.value">
-                <br>
-                Priority:<input class="number" type="number" :value="task.priority" @input="task.priority=$event.target.value">
-                <br>
-                Estimated Duration: <input class="number" type="number" :value="task.estimatedDuration" @input="task.estimatedDuration=$event.target.value">
-                <br>
-                Duration: {{task.actualDuration}}min
-                <br>
-                Sub Tasks:
-                <ul>
-                    <li v-for="child in task.tasks" :key="child">{{child.name}}</li>
-                </ul>
-                <button v-if="!task.done && !task.started" @click="startTask(task)">Start Task</button>
-                <button v-if="!task.done && task.started" @click="stopTask(task, false)">Stop Task</button>
-                <button @click="stopTask(task, true)">Done!</button>
-                <button @click="$store.dispatch('createTask', {name:'Child'+task.lastId, parent:task})">add sub-task</button>
-                <br>
-                       
-            </div>            
-        </div>
+                <button  @click="$store.state.viewMode='cards'">Cards</button>
+                <button  @click="$store.state.viewMode='tree'">Tree</button>
+                <button  @click="$store.state.viewMode='calendar'">Calendar</button>
+                <button  @click="$store.state.viewRoot=-1">ResetViewRoot</button>
+                <!--button  @click="$store.state.tasks = []">Clear All Tasksk</button-->                                      
+        </div>     
+        <div class="reorderingTasks" v-if="reorderingTasks" @click="reorderingTasks=0">            
+        </div>   
         <!-- TREE VIEW -->
-        <div v-if="$store.state.viewMode=='tree'">
-            <div class="task" @mousedown="mouseDown($event, task)" :style="{position:'relative', backgroundColor: task.color, opacity: task.done ? 0.5 : 1}" v-for="task in tasksTree" :key="task">
-                <button @click="$store.state.viewRoot=task.id" style="position:absolute; right:0px; top:0px">=></button>
-                <input type="checkbox" :checked="task.done" @click="task.done=!task.done">
-                <input class="big-input" @input="task.name=$event.target.value" :value="task.name">                
-                <div class="task" @mousedown="mouseDown($event, child)" :style="{backgroundColor: child.color, opacity: child.done ? 0.5 : 1}" v-for="child in task.tasks" :key="child">
-                    <input type="checkbox" :checked="child.done" @click="child.done=!child.done">
-                    <input class="big-input" @input="child.name=$event.target.value" :value="child.name">                
-                </div>
-                <button @click="$store.dispatch('createTask', {name:'Child'+task.lastId, parent:task})">Add Child</button>
-            </div>
+        <div v-if="$store.state.viewMode=='tree'"
+            class="background" 
+            @dblclick.self="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot})">            
+            <!--
+            <transition-group :name="allowTransition && 'slide-fade' || ''" v-on:after-leave="allowTransition=false">
+            -->
+            <task :taskId="task.id" 
+                v-for="task in tasksTree" :key="task" 
+                :class="{task: true, done: task.done}"                 
+                :style="{position:'relative', backgroundColor: task.color}"
+                @stop-transitions="allowTransition=false;"
+                @start-reorder-task="(id)=>reorderingTasks=id"
+                @do-reorder-task="doReorderTask"
+                :reorderingTasks="reorderingTasks"
+                @collapse-all="(t)=>{if(collapseAll%2==t)collapseAll+=2; else collapseAll++;}"
+                :collapseAll="collapseAll"
+            /> 
+            <!--                                                    
+             </transition-group>
+             -->
         </div>        
         <!-- CALENDAR VIEW -->
-        <calendar v-if="$store.state.viewMode=='calendar'" class="background" />
-        <save-load v-if="$store.state.viewMode=='saveload'"/>
+        <calendar v-if="$store.state.viewMode=='calendar'" class="background" />        
+        <button v-if="$store.state.viewRoot != -1" @click="allowTransition=false; $store.state.viewRoot = $store.getters.viewRoot.parent.id || -1" style="position:fixed; bottom:2px; right:2px; z-index:100">up</button>
     </div>
 </template>
 
 <script>
-import calendar from "./Calendar.vue"
-import PostService from "./PostService.js";
-import saveLoad from "./SaveLoad.vue"
+import arson from 'arson'
+import calendar from "./Calendar"
+import PostService from "./PostService";
+import dateButton from "./dateButton"
+import {DateTime} from "./RossUtils"
+import task from "./task"
+
 export default {    
     name: "app",
     data(){
         return{
-            dragging:"", menu: false
+            menu: false, allowTransition: false, reorderingTasks:0, collapseAll: 0
         }
     },
     components:{
-        calendar, saveLoad
+        calendar,task
     },
-    computed: {
-        tasks: function(){     
-            let filters = this.$store.state.viewFilters                    
-            let ret = this.$store.getters.viewRoot.tasks.filter(t=>{
-                let fail = false;
-                Object.values(filters.filters).forEach(f=>{                    
-                    if (filters[f].length>0 && !filters[f].includes(t[f])){                        
-                        fail=true
-                    }                
-                })                 
-                return fail ? false : true                                   
-            })
-            return ret
+    computed: { 
+        loading: function(){
+            return this.$store.state.loading
+        },        
+        tasks: function(){
+            return this.$store.state.tasks
         },
         tasksTree: function(){           
             let filters = this.$store.state.viewFilters            
             let ret = this.$store.getters.viewRoot.tasks.filter(t=>{
                 let fail = false;
                 Object.values(filters.filters).forEach(f=>{                    
-                    if (filters[f].length>0 && !filters[f].includes(t[f])){                        
+                    if (filters[f].length>0 && !filters[f].includes(t[f])){                                                
                         fail=true
                     }                
                 })                 
@@ -122,49 +97,36 @@ export default {
             })
             return ret            
         },
-        viewRootPath: function(){            
-            let r = this.$store.getters.viewRoot
-            let ret = [r]
-            while (r.parent){
-                r = r.parent
-                ret = [r.parent, ...ret]
-            }
+        viewRootPath: function(){                        
+            let id = this.$store.state.viewRoot;
+            let ret = []                                               
+            while (id != -1){                
+                //debugger
+                let t = this.$store.getters.taskById(id)                                                                
+                //debugger
+                if (t.parent.id){                    
+                    id = t.parent.id 
+                }
+                else 
+                    id = -1                
+                ret = [id, ...ret]
+            }                                 
             return ret
         }
+
     },    
-    mounted(){     
-        this.$store.dispatch('loadChart')
-        document.addEventListener('keydown', this.keyDown)
-        //this.$store.dispatch('saveChart')        
-        //this.$store.dispatch('createTask', {name:'task1', due: new Date('2020-1-21')}) 
-        //this.$store.dispatch('createTask', {name:'task2'})         
+    mounted(){             
+        document.addEventListener('keydown', this.keyDown)                
+        
+        let setUpdating = function(updating){this.$store.state.updating = updating}.bind(this)                
+        let doLoadState = function(data){this.dispatch('loadChart', data)}.bind(this.$store)
+
+        this.$socket.on('PMupdating', data=>setUpdating(data))        
+        this.$socket.on('users', (msg)=>console.log(msg))        
+        this.$socket.on('PMupdatedState', (data)=>doLoadState(data))
+        this.$socket.emit('PMloadData') 
     },
-    methods:{                     
-        mouseDown(ev){
-            this.dragging=ev.target
-        },
-        setAllTasks(){
-            this.$store.state.viewFilters.started=[] 
-            this.$store.state.viewFilters.done=[false]
-        },
-        SetDoneTasks(){
-            this.$store.state.viewFilters.done=[true]
-            this.$store.state.viewFilters.started=[]
-        },
-        setCurrentTasks(){
-            this.$store.state.viewFilters.started=[true] 
-            this.$store.state.viewFilters.done=[false]
-        },
-        startTask(task){
-            task.current=true
-            task.started= Date.now()
-        },
-        stopTask(task, done){            
-            let t = new Date().getTime() - new Date(task.started).getTime()
-            task.actualDuration += Math.round(t/1000/60)
-            task.started = false
-            if (done) task.done=true
-        },
+    methods:{                             
         keyDown(ev){            
             if(ev.ctrlKey && ev.key=='z'){
                 if (ev.shiftKey)
@@ -172,65 +134,88 @@ export default {
                 else
                     this.$store.dispatch('undo')
             }
+        },    
+        doReorderTask(id){            
+            this.allowTransition=true
+            if (id != undefined)
+                this.$store.dispatch('reorderTask', {taskId: this.reorderingTasks, positionId: id})
+            this.reorderingTasks=0
+        },        
+    },    
+    watch:{        
+        tasks:{
+            deep:true,
+            handler(){                
+                if(!this.$store.state.loading){
+                    let data = arson.stringify({tasks: this.$store.state.tasks, lastId: this.$store.state.lastId})            
+                    this.$socket.emit('PMupdateState', data)                                
+                    console.log('tasks updated!')                                        
+                }else 
+                    this.$store.state.loading = false
+            }
+        },
+        loading: function(loading){
+            if(loading)
+                this.allowTransition = false                                        
         }
-    },
+    }
 }
 
 </script>
 <style lang="scss">
 @use "./CSS/main.scss" as *;
 @use "vue-select/src/scss/vue-select.scss" as *;
-input.number{
-    width:38px;
+.rootNav{
+    background-color: #0004;
+    font-size:18px;
+    height: 100%;
+    margin-right:2px;
+    border:none;
+    color:white;
 }
-.task{    
-    outline:black solid 1px; 
-    background-color: lavender; 
-    color:black; 
-    width:fit-content;
-    padding:7px;
-    margin:10px;
-    flex-basis: content;    
+.menu{
+    width:100vw; 
+    height:100vh; 
+    position:fixed; 
+    top:0px; left:0px;
+    background-color:#333D; 
+    color:white; 
+    z-index:20; 
+    padding:20px
+} 
+.menu select{
+    position:absolute;    
+    height:18px;
+    color:white
 }
-input[type=color]{
-    width:20px;    
-}
-.big-input{
-    font-size: 26px;
-    font-weight: bold;
-    //width:fit-content;
-}
-select{
-    height:22px;
-}
-select:hover{
+.menu select:hover{
+    z-index:25;
     height:fit-content;
 }
-input, select, option{
+input{
     background-color: transparent;
 }
-
-
-label.dateButton {
-  display: inline-block;
-  position: relative;
-  line-height: 0;
+//Slide Fade Transition
+.slide-fade-enter-active {
+  transition: all .3s ease;
 }
-input.dateButton {
-  position: absolute;
+.slide-fade-leave-active {
+  transition: all .8s ease; //cubic-bezier(1.0, 0.5, 0.8, 1.0);
+}
+.slide-fade-enter, .slide-fade-leave-to
+/* .slide-fade-leave-active below version 2.1.8 */ {
+  transform: translateX(100px);
   opacity: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  overflow: hidden;
 }
-input.dateButton::-webkit-calendar-picker-indicator {
-  position: absolute;
-  top: -150%;
-  left: -150%;
-  width: 300%;
-  height: 300%;
-  cursor: pointer;
+.slide-fade-move{
+    transition: transform 0.5s;
 }
-
+.reorderingTasks{
+    width:100vw;
+    height:100vh;
+    top:0px;
+    left:0px;
+    position:fixed;
+    background-color: #0007
+}
 </style>

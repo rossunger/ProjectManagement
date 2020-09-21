@@ -1,3 +1,46 @@
+export const DateTime = {    
+    formatTime(t){
+        if (t > 0 && t < 60) return t + 'sec'
+        if (t >= 60){
+            let n = Math.trunc(t/60)
+            return n + 'min'
+        }
+    },
+    formatDate(date, format){
+        switch(format){
+            case 'daysFromToday':
+                break
+            case '':
+                break
+        }
+    },
+    compareDates(date1, date2, format){ 
+        let d1, d2;    
+        if (['days','weeks','months','years'].includes(format)){
+            d1 = Date.parse(date1.toString().split('t')[0]) || date1.getTime()
+            d2 = Date.parse(date2.toString().split('t')[0]) || date2.getTime()    
+        }else{                
+            d1 = new Date(date1.getTime())
+            d2 = new Date(date2.getTime())
+        }      
+        if (format=='seconds') format = 1000
+        if (format=='minutes') format = 1000*60
+        if (format=='hours') format = 1000*60*60
+        if (format=='days') format = 1000*60*60*24
+        if (format=='weeks') format = 1000*60*60*24*7
+        if (format=='months') format = 1000*60*60*24*7*(4 + 1/3)
+        if (format=='years') format = 1000*60*60*24*365.25                        
+        //debugger        
+        //console.log(Math.ceil((d1 - d2) / format))   
+        return Math.ceil((d1 - d2) / format)//1000 / 60 / 60 / 24)+1
+    },
+    weeksFromToday(d){
+        return this.compareDates(d, new Date(), 'weeks')
+    },
+    daysFromToday(d){
+        return this.compareDates(d, new Date(), 'days')
+    },
+}
 
 export function searchJSONForItem(obj, id){    
     if(obj.data.id==id)return obj;
