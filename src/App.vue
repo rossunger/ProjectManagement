@@ -8,6 +8,7 @@
             <span style="color:white">&nbsp;{{$store.getters.viewRoot.name || '🏠'}}</span>
         </div>
         <div @click.self="menu=!menu" v-if="menu" class="menu">
+                <!--
                 <h1>Filters</h1>
                 <select multiple @input="$store.state.viewFilters.done=Array.from($event.target.selectedOptions, option => option.value == 'to do' ? false : option.value == 'done' ? true : '');">
                     <option v-for="done in ['to do', 'done']" :key="done" :value="done">{{done}}</option>
@@ -24,9 +25,10 @@
                 </select>
                 <br>
                 <button  @click="$store.state.viewMode='cards'">Cards</button>
+                -->
                 <button  @click="$store.state.viewMode='tree'">Tree</button>
                 <button  @click="$store.state.viewMode='calendar'">Calendar</button>
-                <button  @click="$store.state.viewRoot=-1">ResetViewRoot</button>
+                <!--button  @click="$store.state.viewRoot=-1">ResetViewRoot</button-->
                 <!--button  @click="$store.state.tasks = []">Clear All Tasksk</button-->                                      
         </div>     
         <div class="reorderingTasks" v-if="reorderingTasks" @click="reorderingTasks=0">            

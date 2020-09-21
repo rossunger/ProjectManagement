@@ -2,7 +2,8 @@ import axios from "axios";
 
 //const url= "http://localhost:5000/api/dc/";
 
-export const baseurl = "http://chartsbackend.herokuapp.com/"
+//export const baseurl = "http://chartsbackend.herokuapp.com/"
+export const baseurl = "https://dcproject-management-backend.nn.r.appspot.com/"
 //const url = "http://localhost:5000/api/dc/"; //"http://chartsbackend.herokuapp.com/api/dc/"
 
 class PostService {
