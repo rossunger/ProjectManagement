@@ -8,7 +8,7 @@ export const TaskTemplate = {
     type: "",
     parent: undefined,
     tasks: [],
-    leader: {},
+    leader: '',
     due: undefined,
     daysLeft: undefined,
     excitement: 0,
@@ -16,6 +16,6 @@ export const TaskTemplate = {
     estimatedDuration: 0,
     actualDuration: 0,
     prereqs: [],
-    tags: [],
+    tags: new Set(),
     color: "#e5e8ff",
 }

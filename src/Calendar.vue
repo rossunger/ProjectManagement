@@ -7,10 +7,12 @@
         
         {{dayOfTheMonth(d)}}
         <div class="month" v-if="dayOfTheMonth(d)==1">{{monthOfTheYear(d)}}</div>
-        <div class="events">
+        <div class="events" @dblclick.stop.self="createTaskOnDay(d)">
             <div class="event" :style="{top: (i-1)*15 + '%'}" v-for="(e, i) in $store.getters.getTasksOnDate(new Date(calendarStart+((d-1) * 1000*60*60*24)))" :key="e" @contextmenu.prevent="reordering=e.id">
-                {{e.name}}
-                <button v-if="reordering == e.id" style="float:right; font-size:9px; border:none; padding: 2px 5px; border-radius:50%">x</button>
+                <div style="position:relative">
+                <input :value="e.name" @input="e.name=$event.target.value" style="text-align:center">
+                <button v-if="reordering == e.id" @click="$store.dispatch('deleteTaskById', reordering); reordering=false;" style="position:absolute; right:1px; top:1px; font-size:9px; border:none; padding: 2px 5px; border-radius:50%">x</button>
+                </div>
             </div>
         </div>
     </div>
@@ -73,8 +75,7 @@ export default {
             return days[new Date(this.calendarStart + (d * 1000*60*60*24) ).getDay()]
         },
         createTaskOnDay(d){
-            let due = new Date(this.calendarStart+ ((d-1)*1000*60*60*24))
-            debugger
+            let due = new Date(this.calendarStart+ ((d-1)*1000*60*60*24))          
             this.$store.dispatch('createTask', {due})
         },
         zdays(d){            

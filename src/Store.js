@@ -5,38 +5,49 @@ import {TaskTemplate} from "./consts.js"
 import dayjs from 'dayjs'
 import arson from 'arson'
 import PostService from "./PostService.js";
-
+import auth0 from "auth0-js"
+import router from "./router"
 function setState(state, newState){
     Object.keys(newState).forEach(k=>{
         state[k] = newState[k]
     })            
 }
-
 export default createStore({    
     state:{  
+        authenticated:false,
+        auth0: new auth0.WebAuth({        
+            domain: process.env.VUE_APP_AUTH0_CONFIG_DOMAIN,
+            clientID: process.env.VUE_APP_AUTH0_CONFIG_CLIENTID,
+            redirectUri: process.env.VUE_APP_DOMAINURL + '/auth0callback',
+            responseType:process.env.VUE_APP_AUTH0_CONFIG_RESPONSETYPE,
+            scope: process.env.VUE_APP_AUTH0_CONFIG_SCOPE
+        }),
         updating: false,
         loading:false,
         view: "All",
-        viewMode: 'calendar',
+        viewMode: 'tree',
         viewFilters:{
-            filters: ['leader','type', 'done', 'current', 'parent', 'tags'],            
+            filters: ['leader','type', 'done', 'current', 'parent', 'tags'],  
+            dueTypes:['Overdue', 'Due today', 'Due this week', 'No due date'],
             leader: [],
             type: [],
             done: [],
+            due: [],
             current: [],
             parent: [],
             tags: [],
         },
+        tags: new Set(),
         viewRoot: -1,
         lastId: 0,       
         tasks:[
             
         ],        
-        taskTypes: ['Make a list', 'Draft some text', 'Go Somewhere',
+        taskTypes: ['(none)', 'Make a list', 'Draft some text', 'Go Somewhere',
         'Pick dates/times', 'Watch/Read/Listen/Practice/Study', 'Contact someone',
         'Edit audio/video/image', 'Provide feedback', 'Brainstorm', 'Make/Move thing(s)', 
         'Google/Research', 'Crunch some numbers'],
-        people: ['Jared', 'Ross'],
+        people: ['','Jared', 'Ross', 'Julie', 'Ivy', 'Nathan', 'David Clark', 'Ben Palmer'],
         undos: [],
         redos: [],
     },
@@ -120,7 +131,8 @@ export default createStore({
             let i = parent.tasks.push(_.cloneDeep(TaskTemplate)) - 1                        
             parent.tasks[i].name = name || "newTask"
             state.lastId += 1
-            parent.tasks[i].id= state.lastId
+            parent.tasks[i].id= state.lastId            
+            parent.tasks[i].type = state.taskTypes[0]            
             parent.tasks[i].parent=parent     
             if (due) parent.tasks[i].due=due
 
@@ -154,5 +166,34 @@ export default createStore({
         deleteTaskById({dispatch, getters}, taskId){
             dispatch('deleteTask', getters.taskById(taskId))
         },               
+        login({state}){                       
+            let k = state.auth0.authorize()
+            
+        },
+        auth0HandleAuthentication({state}){            
+            state.auth0.parseHash((err, authResult) => {                
+                if(authResult && authResult.accessToken && authResult.idToken){                
+                    let expiresAt = JSON.stringify(
+                        authResult.expiresIn *1000 + new Date().getTime()
+                    )
+                    localStorage.setItem("access_token", authResult.accessToken)
+                    localStorage.setItem("id_token" ,authResult.idToken)
+                    localStorage.setItem("expires_at", expiresAt)
+                    router.replace('/')
+                }
+                else if (err){
+                    alert('login failed')
+                    router.replace('/login')
+                }
+            })
+        },
+        logout(){
+            console.log('logging out')            
+            localStorage.removeItem("access_token")
+            localStorage.removeItem("id_token")
+            localStorage.removeItem("expires_at")
+            window.location.href = process.env.VUE_APP_AUTH0_CONFIG_DOMAINURL + "/v2/logout?returnTo=" +process.env.VUE_APP_DOMAINURL+ "&client_id="+process.env.VUE_APP_AUTH0_CONFIG_CLIENTID                                    
+        }
     }
 })
+

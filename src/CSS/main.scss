@@ -6,22 +6,23 @@
     width: fit-content;
     min-width: 100%;  
     background-color: $back;        
-    z-index: -1;   
-    //position: fixed;      
+    z-index: -1;         
+    position: fixed;
+    width:100vw;
+    height:100vh;
 }
-#app {
-    position: absolute;    
-    margin: 0vh 0;    
+.root {
+    position: relative;    
+    margin: 0px;    
     height: 100%;
     width: 100%;  
     background-color: $back;        
-    z-index: -1;     
-}
-.background{
-    background-color: $back;        
+    z-index: -1;         
 }
 body{
     margin:0;      
+    width:100%;
+    height:100%;
     //color:white
 }
 body::-webkit-scrollbar {
