@@ -183,7 +183,7 @@ export default createStore({
                 }
                 else if (err){
                     alert('login failed')
-                    router.replace('/login')
+                    router.replace('/')
                 }
             })
         },
