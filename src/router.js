@@ -17,7 +17,7 @@ const router = createRouter({
     routes, 
 })
 router.beforeEach((to, from,next)=>{
-    let routerAuthCheck = true      
+    let routerAuthCheck = false      
     if (localStorage.getItem('access_token') && localStorage.getItem('id_token') && localStorage.getItem('expires_at')){
         let expires_at = JSON.parse(localStorage.getItem('expires_at'))
         routerAuthCheck = new Date().getTime() < expires_at
@@ -26,6 +26,7 @@ router.beforeEach((to, from,next)=>{
     if (to.matched.some(record=>record.path == "/auth0callback")){            
         store.dispatch('auth0HandleAuthentication')        
         next(false)
+        return
     }       
     if (to.matched.some(record=>record.meta.requiresAuth)){
         if (routerAuthCheck){
