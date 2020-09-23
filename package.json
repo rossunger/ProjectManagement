@@ -6,8 +6,7 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build"
   },
-  "dependencies": {
-    "@auth0/auth0-spa-js": "^1.12.1",
+  "dependencies": {    
     "arson": "^0.2.6",
     "auth0-js": "^9.14.0",
     "axios": "^0.19.2",
