@@ -1,0 +1,109 @@
+
+input.number{
+    width:38px;
+}
+.task{    
+    border:black solid 1px; 
+    background-color: lavender; 
+    color:black; 
+    width:fit-content;
+    max-width: 95vw;
+    min-width: min(95vw, 350px);
+    min-height:40px;
+    padding:7px;
+    margin:10px;
+    border-radius: 10px;
+    flex-basis: content;
+    z-index:10;    
+}
+.subtask{    
+    border:black solid 1px; 
+    background-color: lavender; 
+    color:black; 
+    width:96%;
+    max-width: 95vw;
+    padding:7px;
+    margin:2%;
+    border-radius: 10px;
+    flex-basis: content;     
+}
+.done{
+    opacity: 0.5;
+}
+input[type=color]{
+    width:20px;    
+}
+.big-input{
+    font-size: 18px;
+    font-weight: bold;
+    max-width: 90vw;
+    min-width: 40%;
+    height:25px;
+}
+.medium-input{
+    font-size: 15px;
+    font-weight: bold;
+    max-width:80vw;
+    min-width: 60%;
+    width:90%;
+    //width:fit-content;
+}
+.zoomButton{
+    padding:0px;
+    border-radius:50%;
+    border:none;
+    background-color:transparent
+}
+.reorderHere{    
+    position:absolute;
+    width: 100%;
+    left:0px;
+    bottom:-15px;   
+    background-color: slateblue;
+    border: 2px solid black;
+    color:white;        
+}
+.reorderHereFirst{    
+    position:absolute;
+    width: 100%;
+    left:0px;
+    top:-15px;   
+    background-color: slateblue;
+    border: 2px solid black;
+    color:white;        
+}
+.moving{
+    transition: 0.3s;
+    border: 2px orange solid;
+    transform: rotate(5deg);
+}
+.reordering{
+    margin-bottom: 25px;
+}
+svg{
+    width:20px; 
+    height:20px;
+    margin-right:2px;
+}
+.unbutton{
+    background: transparent;
+    border:none;
+    padding-left:5px;
+    padding-right:2px;
+}
+.taskTopRight{
+    width:100%; 
+    //height:50px; 
+    //border:red solid 1px; 
+    right:0px; 
+    top:0px; 
+    display: grid;
+    float:right;    
+    div, button{
+        width:25px;
+        height: 25px;        
+        padding-top:0px;
+        padding-bottom:0px;
+        text-align:center;
+    }    
+}

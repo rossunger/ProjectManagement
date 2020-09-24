@@ -193,7 +193,7 @@ body {
 }
 
 .main-content {
-	display: flex; //grid;
+    display: flex; //grid;    
     flex-wrap: wrap;
 	grid-auto-flow: row;
 	//grid-template-rows: repeat(1000, 170px) 80px;

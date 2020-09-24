@@ -1,41 +1,52 @@
 <template>        
-<div>
-    <span style="color:white" @click.self="menu=!menu" v-if="!menu">||||  </span>        
+<div style="position:fixed; top:2px; left:2px; z-index:100; background-color: #44A; padding:7px; border-radius:20px; color:white" @click.self="menu=!menu" v-if="!menu">||||  </div>        
+<div>        
     <button class="rootNav" v-for="root in viewRootPath" :key="root" @click="allowTransition=false; $store.state.viewRoot=root">{{$store.getters.taskById(root).name || '🏠'}}</button>
     <span style="color:white">&nbsp;{{$store.getters.viewRoot.name || '🏠'}}</span>    
 </div>
-<div @click.self="menu=!menu" v-if="menu" class="menu">                
+<div @click.self="menu=!menu" v-show="menu" class="menu">                
     <h1>Filters</h1><br>
     Show me the tasks that are:<br><br>
     <div style="display:flex; flex-wrap: wrap; justify-content: center; text-align:center">
-        <div style="width: 20%">         
-        
-        <select multiple @input="$store.state.viewFilters.done=Array.from($event.target.selectedOptions, option => option.value == 'to do' ? false : option.value == 'done' ? true : '');">        
-            <option v-for="done in ['to do', 'done']" :key="done" :value="done">{{done}}</option>
+        <div style="width: 20%">                 
+        <select ref="done" multiple @input="$store.state.viewFilters.done=Array.from($event.target.selectedOptions, option => option.value);">        
+            <option selected disabled hidden style='display: none' value=''></option>
+            <option v-for="done in [false, true]" :key="done" :value="done">{{done ? "done" : "to do" }}</option>
         </select> 
+        <button class="clear" @click="clearSelect('done')">clear</button>
         </div>
         <div style="width: 20%; min-width:fit-content">
-        <select multiple @change="$store.state.viewFilters.type=Array.from($event.target.selectedOptions, option => option.value);">
+        <select ref="type" multiple @change="$store.state.viewFilters.type=Array.from($event.target.selectedOptions, option => option.value);">
+            <option selected disabled hidden style='display: none' value=''></option>
             <option v-for="type in $store.state.taskTypes" :key="type" :value="type">{{type}}</option>
         </select>
+        <button class="clear" @click="clearSelect('type')">clear</button>
         </div>
         <div style="width: 20%">                                   
-        <select multiple @change="$store.state.viewFilters.leader=Array.from($event.target.selectedOptions, option => option.value);">
-            <option  v-for="people in $store.state.people" :key="people" :value="people" :selected="$store.state.viewFilters.leader.includes(people)">{{people}}</option>
+        <select ref="leader" multiple @change="$store.state.viewFilters.leader=Array.from($event.target.selectedOptions, option => $store.getters.personByName(option.value));">
+            <option selected disabled hidden style='display: none' value=''></option>
+            <option v-for="person in $store.state.people" :key="person" :value="person.name">{{person.name}}</option>
         </select>
+        <button class="clear" @click="clearSelect('leader')">clear</button>
         </div>
         
     </div>
     <br><br>                    
     <h1>Views</h1><br>
     <button style="width: min(30%, 140px); " @click="$store.state.viewMode='tree'">List</button>
-    <button style="width: min(30%, 140px);" @click="$store.state.viewMode='calendar'">Calendar</button>                
+    <button style="width: min(30%, 140px);" @click="$store.state.viewMode='calendar'">Calendar</button>                    
+    <button style="width: min(30%, 140px);" @click="$store.state.viewMode='paste'">Paste Tasks</button>                    
+    <button style="width: min(30%, 140px);" @click="$store.state.viewMode='people'">Manage People</button>                    
     <br><br>
     <h1>Setting</h1>
-    <button v-if="$store.state.authenticated" @click="$store.dispatch('logout')">LOGOUT</button>
+    <button v-if="$store.state.authenticated" @click="$store.dispatch('logout')">LOGOUT</button>    
 </div>     
-<div class="reorderingTasks" v-if="reorderingTasks" @click="reorderingTasks=0">            
-</div>           
+<div class="reorderingTasks" v-if="reorderingTasks" @click="reorderingTasks=0"></div>           
+<!-- div class="reparentTask" v-if="reparentTask!=0" @click="reparentTask=0">
+    <input placeholder="search..." @click.stop style="border: white 1px solid; color:white" @input="doSearchParents($event.target.value)">
+    <nested-task-tree-task :reparentingId="reparentTask" @reparent-task="doReparentTask" style="margin-left:40px;" v-for="child in tasks" :key="child" :task="child" />
+
+</div-->
 <div v-if="$store.state.viewMode=='tree'"
     style="width:100%; height:100%; min-height:100vh"
     @dblclick.self="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot})">                    
@@ -44,15 +55,18 @@
         v-for="task in tasksTree" :key="task"     
         :style="{position:'relative', backgroundColor: task.color}"
         @stop-transitions="allowTransition=false;"
-        @start-reorder-task="(id)=>reorderingTasks=id"
+        @start-reorder-task="(id)=>{reorderingTasks=id}"
         @do-reorder-task="doReorderTask"
+        @reparent-task="(id)=>reparentTask=id"
         :reorderingTasks="reorderingTasks"
         @collapse-all="(t)=>{if(collapseAll%2==t)collapseAll+=2; else collapseAll++;}"
         :collapseAll="collapseAll"
     />    
         </transition-group>                    
 </div>                
-<calendar v-if="$store.state.viewMode=='calendar'" class="background" />        
+<calendar v-if="$store.state.viewMode=='calendar'" style="position: absolute; top:0px; left:0px"/>        
+<paste-tasks v-if="$store.state.viewMode=='paste'" style="position: absolute; top:0px; left:0px"/>        
+<manage-people v-if="$store.state.viewMode=='people'" style="position: absolute; top:0px; left:0px"/>        
 <button v-if="$store.state.viewRoot != -1" @click="allowTransition=false; $store.state.viewRoot = $store.getters.viewRoot.parent.id || -1" style="position:fixed; bottom:2px; right:2px; z-index:100">up</button>    
 </template>
 
@@ -63,16 +77,19 @@ import PostService from "./PostService";
 import dateButton from "./dateButton"
 import {DateTime} from "./RossUtils"
 import task from "./task"
-
+import nestedTaskTreeTask from './nestedTaskTreeTask'
+import pasteTasks from './pasteTasks.vue'
+import managePeople from './managePeople.vue'
 export default {    
     name: "app",
     data(){
         return{
-            menu: false, allowTransition: false, reorderingTasks:0, collapseAll: 0
+            menu: false, allowTransition: false, reorderingTasks:0, collapseAll: 0,
+            reparentTask: 0, searchParents:"",
         }
     },
     components:{
-        calendar,task
+        calendar,task, nestedTaskTreeTask, pasteTasks, managePeople
     },
     computed: { 
         loading: function(){
@@ -86,7 +103,7 @@ export default {
             let ret = this.$store.getters.viewRoot.tasks.filter(t=>{
                 let fail = false;
                 Object.values(filters.filters).forEach(f=>{                    
-                    if (filters[f].length>0 && !filters[f].includes(t[f])){                                                
+                    if (filters[f].length>0 && !filters[f].includes(t[f])){                                                                                            
                         fail=true
                     }                
                 })                
@@ -137,14 +154,26 @@ export default {
             if (id != undefined)
                 this.$store.dispatch('reorderTask', {taskId: this.reorderingTasks, positionId: id})
             this.reorderingTasks=0
-        },        
+        },
+        doSearchParents(txt){
+            this.searchParents = txt
+        },
+        doReparentTask(id){
+            this.$store.dispatch('reparentTask', {task:this.reparentTask, newParent:id, newPosition:0})
+            this.reparentingTask=0
+            this.reorderingTasks=0
+        },
+        clearSelect(name){            
+            this.$refs[name].selectedIndex=0                    
+            this.$store.state.viewFilters[name] = []
+        }
     },    
     watch:{        
         tasks:{
             deep:true,
             handler(){                
                 if(!this.$store.state.loading){
-                    let data = arson.stringify({tasks: this.$store.state.tasks, lastId: this.$store.state.lastId})            
+                    let data = arson.stringify({tasks: this.tasks, lastId: this.$store.state.lastId, people:this.$store.state.people, committees: this.$store.state.committees})            
                     this.$socket.emit('PMupdateState', data)                                
                     console.log('tasks updated!')                                        
                 }else 
@@ -154,7 +183,7 @@ export default {
         loading: function(loading){
             if(loading)
                 this.allowTransition = false                                        
-        }
+        },        
     }
 }
 
@@ -220,5 +249,20 @@ input{
 }
 a{
     color:white;
+}
+.reparentTask{
+    z-index:100; 
+    min-width:100vw;
+    min-height:100vh;
+    background-color: #0009;
+    position:absolute;
+    top:0px;
+    color:white;
+    padding-top:50px;
+}
+.clear{
+    width:100%;
+    background-color:slateblue;
+    color:white
 }
 </style>

@@ -1,6 +1,5 @@
 export const TaskTemplate = {
-    id: -1,
-    lastId: -1,
+    id: -1,    
     name: "",
     done: false,
     current: false,
@@ -18,4 +17,13 @@ export const TaskTemplate = {
     prereqs: [],
     tags: new Set(),
     color: "#e5e8ff",
+}
+export const PersonTemplate = {    
+    name: "",
+    committees: [],
+
+}
+export const CommitteeTemplate = {    
+    name: "",
+    members: []
 }

@@ -1,12 +1,17 @@
 import {createStore} from "vuex";
 import _, { isArray, isString } from "lodash";
 import {searchJSONForItem, searchJSONForParent, searchJSONandDelete, autoSave} from "./RossUtils.js"
-import {TaskTemplate} from "./consts.js"
+import {TaskTemplate, PersonTemplate, CommitteeTemplate} from "./consts.js"
 import dayjs from 'dayjs'
 import arson from 'arson'
 import PostService from "./PostService.js";
 import auth0 from "auth0-js"
 import router from "./router"
+
+const AllowedUsers = ["ross93@gmail.com", "jaredempsey@gmail.com", "williams.garry@gmail.com","benpal14@gmail.com",
+"jewelyshanks@gmail.com", "ivy_charles@hotmail.com", "nathandoras@gmail.com", "dclark@nscad.ca", "harley.hefford@gmail.com"]
+
+
 function setState(state, newState){
     Object.keys(newState).forEach(k=>{
         state[k] = newState[k]
@@ -25,7 +30,7 @@ export default createStore({
         updating: false,
         loading:false,
         view: "All",
-        viewMode: 'tree',
+        viewMode: 'people',
         viewFilters:{
             filters: ['leader','type', 'done', 'current', 'parent', 'tags'],  
             dueTypes:['Overdue', 'Due today', 'Due this week', 'No due date'],
@@ -40,6 +45,7 @@ export default createStore({
         tags: new Set(),
         viewRoot: -1,
         lastId: 0,       
+        lastPeopleCommitteeId: 0,
         tasks:[
             
         ],        
@@ -47,7 +53,8 @@ export default createStore({
         'Pick dates/times', 'Watch/Read/Listen/Practice/Study', 'Contact someone',
         'Edit audio/video/image', 'Provide feedback', 'Brainstorm', 'Make/Move thing(s)', 
         'Google/Research', 'Crunch some numbers'],
-        people: ['','Jared', 'Ross', 'Julie', 'Ivy', 'Nathan', 'David Clark', 'Ben Palmer'],
+        people: [],
+        committees:[],
         undos: [],
         redos: [],
     },
@@ -87,18 +94,28 @@ export default createStore({
                 return ret
             }
             return getChildTasks(state)
+        },
+        personByName: (state) => (name) =>{
+            return state.people.find(p=>p.name==name)
+        },
+        committeeByName: (state) => (name) =>{            
+            return state.committees.find(c=>c.name==name)
         }
     },
-    mutations:{         
-        reparentTask(task, newParent, newPosition){
-            //newParent.tasks.splice(newPosition, 0, task)
-            //task.parent.tasks = task.parent.tasks.filter(c=>{return c!=task})            
-        },
+    mutations:{                 
         setView(state, view){
             state.view = view
         }
     },
     actions:{
+        reparentTask({getters}, {task, newParent, newPosition}){            
+            task = getters.taskById(task)
+            getters.taskById(newParent).tasks.splice(newPosition, 0, task)
+            task.parent.tasks.splice(task.parent.tasks.indexOf(task), 1)
+            task.parent = newParent
+            //newParent.tasks.splice(newPosition, 0, task)
+            //task.parent.tasks = task.parent.tasks.filter(c=>{return c!=task})            
+        },
         /*undo({state}){
             debugger
             if (state.undos.length>0){                      
@@ -126,16 +143,22 @@ export default createStore({
             data ? data = arson.parse(data) : data = arson.parse(await PostService.getChart('current'))        
             state.tasks = data.tasks
             state.lastId = data.lastId
+            state.committees = data.committees || state.committees
+            state.people = data.people || state.people
         },
-        createTask({dispatch, state}, {name, parent=state, due}){          
-            let i = parent.tasks.push(_.cloneDeep(TaskTemplate)) - 1                        
-            parent.tasks[i].name = name || "newTask"
+        createTask({dispatch, state}, {name, parent=state, due, leader, excitement, priority,estimatedDuration}){          
+            let task = parent.tasks[parent.tasks.push(_.cloneDeep(TaskTemplate)) - 1]
+            task.name = name || "newTask"            
             state.lastId += 1
-            parent.tasks[i].id= state.lastId            
-            parent.tasks[i].type = state.taskTypes[0]            
-            parent.tasks[i].parent=parent     
-            if (due) parent.tasks[i].due=due
-
+            task.id= state.lastId            
+            task.type = state.taskTypes[0]                        
+            task.parent=parent     
+            if (due) task.due=due                        
+            if (leader) task.leader=leader; else task.leader = state.people[0];
+                if (excitement) parent.tasks[i].excitement=excitement
+            if (priority) parent.tasks[i].priority=priority
+            if (estimatedDuration) parent.tasks[i].estimatedDuration=estimatedDuration
+            
             dispatch('addUndo')
         },   
         setTaskValues({},{task, name, type}){
@@ -170,12 +193,18 @@ export default createStore({
             let k = state.auth0.authorize()
             
         },
-        auth0HandleAuthentication({state}){            
+        auth0HandleAuthentication({state, dispatch}){            
             state.auth0.parseHash((err, authResult) => {                
-                if(authResult && authResult.accessToken && authResult.idToken){                
+                if(authResult && authResult.accessToken && authResult.idToken){
+                    if (!AllowedUsers.includes(authResult.idTokenPayload.email)){               
+                        alert('Invalid user. Please try a different account')
+                        dispatch('logout')
+                        router.replace('/')
+                        return
+                    }
                     let expiresAt = JSON.stringify(
                         authResult.expiresIn *1000 + new Date().getTime()
-                    )
+                    )                    
                     localStorage.setItem("access_token", authResult.accessToken)
                     localStorage.setItem("id_token" ,authResult.idToken)
                     localStorage.setItem("expires_at", expiresAt)
@@ -191,9 +220,81 @@ export default createStore({
             console.log('logging out')            
             localStorage.removeItem("access_token")
             localStorage.removeItem("id_token")
-            localStorage.removeItem("expires_at")
+            localStorage.removeItem("   expires_at")
             window.location.href = process.env.VUE_APP_AUTH0_CONFIG_DOMAINURL + "/v2/logout?returnTo=" +process.env.VUE_APP_DOMAINURL+ "&client_id="+process.env.VUE_APP_AUTH0_CONFIG_CLIENTID                                    
-        }
+        },
+        addPerson({state}, name=""){
+            let p =_.cloneDeep(PersonTemplate)
+            state.lastPeopleCommitteeId++
+            p.name= name || "New Person" + state.lastPeopleCommitteeId            
+            state.people.push(p)               
+        },
+        renamePerson({state}, {person, newName}){
+            if (state.people.find(p=>{return p.name==newName}))
+            {
+                alert('that person already exists!')
+                return
+            }
+            person.name=newName
+        },
+        addCommitteeToPerson({state,getters}, {person, committeeName}){                        
+            if(!person.committees.find(c=>c.name == committeeName)){
+                person.committees.push(getters.committeeByName(committeeName))
+            }
+        },
+        setPersonsCommittees({state,getters}, {person, committeeNames}){
+            
+            person.committees.forEach(c=>{                
+                c.members.splice(c.members.indexOf(person), 1)
+            })
+            person.committees = []
+            Array.from(committeeNames).forEach(c=>{
+                let committee = getters.committeeByName(c.value)
+                person.committees.push(committee)                
+                if(!committee.members.find(p=>p==person))
+                    committee.members.push(person)
+            })            
+        },
+        clearCommitteesPeople({}, {committee}){            
+            committee.members.forEach(p=>{                
+                p.committees.splice(p.committees.indexOf(committee), 1)
+            })
+            committee.members = []                        
+        },
+        removePerson({state}, person){        
+            person.committees.forEach(c=>{
+                c.members.splice(c.members.indexOf(person), 1)
+            })
+            state.people.splice(state.people.indexOf(person),1)
+            person = []
+        },
+        removeCommittee({state}, committee){
+            committee.members.forEach(p=>{
+                p.committees.splice(p.committees.indexOf(committee), 1)
+            })
+            state.committees.splice(state.committees.indexOf(committee),1)
+            committee = []
+        },
+        addCommittee({state}, name=""){
+            let c = _.cloneDeep(CommitteeTemplate)
+            state.lastPeopleCommitteeId++
+            c.name= name || "New Committee" + state.lastPeopleCommitteeId
+            state.committees.push(c)
+        },
+        renameCommittee({state}, {committee, newName}){
+            if (state.committees.find(c=>{return c.name==newName}))
+            {
+                alert('that person already exists!')
+                return
+            }
+            committee.name=newName
+        },
+        addPersonToCommittee({state,getters}, {committee, personName}){            
+            if(!committee.members.find(p=>p.name == personName)){
+                committee.members.push(getters.personByName(personName))
+            }
+        },
+        
     }
 })
 
