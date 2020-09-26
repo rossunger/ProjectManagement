@@ -180,7 +180,9 @@ export default {
 
     },    
     mounted(){        
-        process.env.VUE_APP_DEBUG == 'true' ? this.debug = true : this.debug=false
+        this.debug = false;
+        //process.env.VUE_APP_DEBUG == 'true' ? this.debug = true : this.debug=false
+        //console.log(process.env.VUE_APP_DEBUG)
         document.addEventListener('keydown', this.keyDown)                
         
         let setUpdating = function(updating){this.$store.state.updating = updating}.bind(this)                
