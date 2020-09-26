@@ -125,8 +125,7 @@ export default {
     data(){
         return{
             menu: false, allowTransition: false, reorderingTasks:0, collapseAll: 0,
-            reparentTask: 0, searchParents:"", eventChecklist: ['Name', 'Date', 'Location', 'Transport', 'Social Media Posts', ],
-            debug: true,
+            reparentTask: 0, searchParents:"", eventChecklist: ['Name', 'Date', 'Location', 'Transport', 'Social Media Posts', ],            
         }
     },
     components:{
@@ -179,21 +178,18 @@ export default {
         }
 
     },    
-    mounted(){        
-        this.debug = false;
+    mounted(){                
         //process.env.VUE_APP_DEBUG == 'true' ? this.debug = true : this.debug=false
         //console.log(process.env.VUE_APP_DEBUG)
         document.addEventListener('keydown', this.keyDown)                
         
         let setUpdating = function(updating){this.$store.state.updating = updating}.bind(this)                
-        let doLoadState = function(data){this.dispatch('loadChart', data)}.bind(this.$store)
-        
-        this.debug ? this.$socket.emit('SetChart', 'debug') : this.$socket.emit('SetChart', 'current')  
+        let doLoadState = function(data){this.dispatch('loadChart', data)}.bind(this.$store)                
         // this.$socket.emit('SetChart', 'current')
         this.$socket.on('PMupdating', data=>setUpdating(data))        
         this.$socket.on('users', (msg)=>console.log(msg))        
         this.$socket.on('PMupdatedState', (data)=>doLoadState(data))
-        this.$socket.emit('PMloadData')         
+        this.$socket.emit('PMloadData', this.$store.state.debug ? 'debug': 'current' )         
     },
     methods:{                             
         keyDown(ev){            
@@ -229,7 +225,7 @@ export default {
             handler(){                 
                 if(!this.$store.state.loading){
                     let data = arson.stringify({tasks: this.tasks, lastId: this.$store.state.lastId, people:this.$store.state.people, committees: this.$store.state.committees, tags: this.$store.state.tags})            
-                    this.$socket.emit('PMupdateState', data)                                
+                    this.$socket.emit('PMupdateState', data, this.$store.state.debug ? 'debug' : 'current')                                
                     console.log('tasks updated!')                                        
                 }else 
                     this.$store.state.loading = false
