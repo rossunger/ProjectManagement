@@ -22,17 +22,17 @@ export default createStore({
         authenticated:false,
         auth0: new auth0.WebAuth({        
             domain: process.env.VUE_APP_AUTH0_CONFIG_DOMAIN,
-            clientID: process.env.VUE_APP_AUTH0_CONFIG_CLIENTID,
-            redirectUri: process.env.VUE_APP_DOMAINURL + '/auth0callback',
+            clientID: process.env.VUE_APP_AUTH0_CONFIG_CLIENTID,            
+            redirectUri: window.location.href + 'auth0callback',  //'http://192.168.0.146:8080/auth0callback', //process.env.VUE_APP_DOMAINURL + '/auth0callback',
             responseType:process.env.VUE_APP_AUTH0_CONFIG_RESPONSETYPE,
             scope: process.env.VUE_APP_AUTH0_CONFIG_SCOPE
         }),
         updating: false,
         loading:false,
         view: "All",
-        viewMode: 'people',
+        viewMode: 'events',
         viewFilters:{
-            filters: ['leader','type', 'done', 'current', 'parent', 'tags'],  
+            filters: ['leader','type', 'done', 'current', 'parent'],  
             dueTypes:['Overdue', 'Due today', 'Due this week', 'No due date'],
             leader: [],
             type: [],
@@ -41,6 +41,7 @@ export default createStore({
             current: [],
             parent: [],
             tags: [],
+            search: ""
         },
         tags: new Set(),
         viewRoot: -1,
@@ -109,8 +110,10 @@ export default createStore({
     },
     actions:{
         reparentTask({getters}, {task, newParent, newPosition}){            
+            debugger
             task = getters.taskById(task)
-            getters.taskById(newParent).tasks.splice(newPosition, 0, task)
+            newParent = getters.taskById(newParent)
+            newParent.tasks.splice(newPosition, 0, task)
             task.parent.tasks.splice(task.parent.tasks.indexOf(task), 1)
             task.parent = newParent
             //newParent.tasks.splice(newPosition, 0, task)
@@ -140,11 +143,13 @@ export default createStore({
         },                
         async loadChart({state}, data){            
             state.loading = true
-            data ? data = arson.parse(data) : data = arson.parse(await PostService.getChart('current'))        
+            if (data) data = arson.parse(data);
+            else throw 'could not load data!' //: data = arson.parse(await PostService.getChart('current'))        
             state.tasks = data.tasks
             state.lastId = data.lastId
             state.committees = data.committees || state.committees
             state.people = data.people || state.people
+            state.tags = data.tags || state.tags
         },
         createTask({dispatch, state}, {name, parent=state, due, leader, excitement, priority,estimatedDuration}){          
             let task = parent.tasks[parent.tasks.push(_.cloneDeep(TaskTemplate)) - 1]
@@ -241,18 +246,33 @@ export default createStore({
             if(!person.committees.find(c=>c.name == committeeName)){
                 person.committees.push(getters.committeeByName(committeeName))
             }
-        },
-        setPersonsCommittees({state,getters}, {person, committeeNames}){
-            
+        },        
+        unlinkCommitteeAndPerson({state,getters}, {person, committee}){
+            committee.members.splice(committee.members.indexOf(person), 1)
+            person.committees.splice(person.committees.indexOf(committee),1)
+        },        
+        setPersonsCommittees({state,getters}, {person, committeeNames}){            
             person.committees.forEach(c=>{                
                 c.members.splice(c.members.indexOf(person), 1)
             })
             person.committees = []
-            Array.from(committeeNames).forEach(c=>{
-                let committee = getters.committeeByName(c.value)
+            committeeNames.forEach(c=>{
+                let committee = getters.committeeByName(c)
                 person.committees.push(committee)                
                 if(!committee.members.find(p=>p==person))
                     committee.members.push(person)
+            })            
+        },              
+        setCommitteesPeople({state,getters, dispatch}, {committee, PeoplesNames}){            
+            committee.members.forEach(p=>{                
+                p.committees.splice(p.committees.indexOf(committee), 1)
+            })
+            committee.members = []
+            PeoplesNames.forEach(p=>{
+                let person = getters.personByName(p)
+                committee.members.push(person)                
+                if(!person.committees.find(c=>c==committee))
+                    person.committees.push(committee)
             })            
         },
         clearCommitteesPeople({}, {committee}){            

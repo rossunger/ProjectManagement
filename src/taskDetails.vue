@@ -29,7 +29,8 @@
         </div>
         <!-- Estimated Duration: <input class="number" type="number" :value="task.estimatedDuration" @input="set(task, 'estimatedDuration', $event.target.value)"> -->
         <br>      
-        Actual Duration: {{formatTime(task.actualDuration)}}<br>
+        <span>Description: </span><span style="float:right">{{formatTime(task.actualDuration)}}</span><br>
+        <textarea :value="task.description" @input="task.description = $event.target.value" />
             Tags: 
         <div style="display:flex">
         <div v-for="tag in task.tags" :key="tag" style="margin-right:8px;">
@@ -38,7 +39,7 @@
                 <button class="unbutton" @click.stop="searchTag(tag)">{{tag}}</button>
             </div>                    
         </div>
-        <input @blur="(ev)=>{if (ev.currentTarget.value != ''){addTag(ev); }}" @keydown="(ev)=>{if (ev.key==',' || ev.key=='enter'){ev.preventDefault(); ev.target.blur()}}">
+        <input style="background-color:#0001" @blur="(ev)=>{if (ev.currentTarget.value != ''){addTag(ev); }}" @keydown="(ev)=>{if (ev.key==',' || ev.key=='enter'){ev.preventDefault(); ev.target.blur()}}">
         </div>
 </template>
 <script>
@@ -62,6 +63,9 @@ export default {
         clearTag(tag){
             this.task.tags.delete(tag)
         },
+        searchTag(tag){
+            this.$store.state.viewFilters.tags = [tag]
+        }
     },
     data(){
         return{

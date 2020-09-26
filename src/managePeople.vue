@@ -5,11 +5,12 @@
         <div class="person" v-for="p in $store.state.people.filter(p=>p.name!='(nobody)').sort((a,b)=>{if (a.name>b.name)return 1; if (b.name>a.name)return -1; return 0 })" :key="p">
             <button @click="$store.dispatch('removePerson', p)" style="position:absolute; top:0px; right:0px">X</button>
             <input :value="p.name" @input="p.name=$event.target.value"><br>
-            Committees:<br>            
-            <select multiple @change="$store.dispatch('setPersonsCommittees', {person:p, committeeNames:$event.target.selectedOptions})">                
+            Committees:<br> 
+            <select-box :array="$store.state.committees" :showOne="false" :selected="p.committees" @changed-multi="(newCommittees)=>{$store.dispatch('setPersonsCommittees', {person: p, committeeNames:newCommittees.map(c=>c.name)})}" />           
+            <!--select multiple @change="$store.dispatch('setPersonsCommittees', {person:p, committeeNames:$event.target.selectedOptions.map(o=>o.value)})">                
                 <option selected disabled hidden style='display: none' value=''></option>
                 <option :selected="false" v-for="c in $store.state.committees" :key="c" :value="c.name">{{c.name}}</option>
-            </select>
+            </select-->
             <button class="clear" @click="$store.dispatch('setPersonsCommittees', {person:p, committeeNames: []})">clear</button>
         </div>
     </div>
@@ -18,18 +19,20 @@
         <div class="person" v-for="c in $store.state.committees.sort((a,b)=>{if (a.name>b.name)return 1; if (b.name>a.name)return -1; return 0 })" :key="c">
             <button @click="$store.dispatch('removeCommittee', c)" style="position:absolute; top:0px; right:0px">X</button>
             <input :value="c.name" @input="c.name=$event.target.value"><br>
-            <select disabled multiple>                
+            <select-box :array="$store.state.people" :showOne="false" :selected="c.members" @changed-multi="(newMembers)=>{$store.dispatch('setCommitteesPeople', {committee:c, PeoplesNames: newMembers.map(p=>p.name)})}" />
+            <!--select disabled multiple>                
                 <option selected disabled hidden style='display: none' value=''></option>
                 <option v-for="p in c.members" :key="p" :value="c.name">{{p.name}}</option>
-            </select>
+            </select-->
             <button class="clear" @click="$store.dispatch('clearCommitteesPeople', {committee:c})">clear</button>
         </div>        
     </div>
 </div>
 </template>
 <script>
+import selectBox from './selectBox'
 export default {
-    name: 'manage-people'    
+    name: 'manage-people', components:{selectBox}
 }
 </script>
 <style scoped lang="scss">

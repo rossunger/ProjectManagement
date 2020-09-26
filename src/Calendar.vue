@@ -1,18 +1,21 @@
 <template>  
 <div class="main-content">   
-    <div class="date" :style="calculateStyle(d)" v-for="d in 356" :key="d" @dblclick.self="createTaskOnDay(d)" >    
-        
-        <div class="moveHere" v-if="reordering && !($store.getters.taskById(reordering).due.getTime() == (calendarStart + ((d-1)*24*60*60*1000)))" @click="$store.getters.taskById(reordering).due = new Date(calendarStart+((d-1) * 1000*60*60*24)); reordering=undefined;">Move here</div>
-        
-        
+    <div class="date" :style="calculateStyle(d)" v-for="d in 356" :key="d" @dblclick.self="createTaskOnDay(d)" >            
+        <div class="moveHere" v-if="reordering && !($store.getters.taskById(reordering).due.getTime() == (calendarStart + ((d-1)*24*60*60*1000)))" @click="$store.getters.taskById(reordering).due = new Date(calendarStart+((d-1) * 1000*60*60*24)); reordering=0;">Move here</div>                
         {{dayOfTheMonth(d)}}
         <div class="month" v-if="dayOfTheMonth(d)==1">{{monthOfTheYear(d)}}</div>
         <div class="events" @dblclick.stop.self="createTaskOnDay(d)">
-            <div class="event" :style="{top: (i-1)*15 + '%'}" v-for="(e, i) in $store.getters.getTasksOnDate(new Date(calendarStart+((d-1) * 1000*60*60*24)))" :key="e" @contextmenu.prevent="reordering=e.id">
-                <div style="position:relative">
-                <input :value="e.name" @input="e.name=$event.target.value" style="text-align:center">
-                <button v-if="reordering == e.id" @click="$store.dispatch('deleteTaskById', reordering); reordering=false;" style="position:absolute; right:1px; top:1px; font-size:9px; border:none; padding: 2px 5px; border-radius:50%">x</button>
+            <div v-if="$store.getters.getTasksOnDate(new Date(calendarStart+((d-1) * 1000*60*60*24))).length > 4" 
+                style="position:absolute; left:50%; bottom: -3px; font-size:2vmin">
+                <i class="fas fa-sort-down"></i>
+            </div>
+            <div class="event" :style="{top: (i-1)*15 + '%'}" v-for="(e, i) in $store.getters.getTasksOnDate(new Date(calendarStart+((d-1) * 1000*60*60*24)))" :key="e">
+                <div style="position:relative;">
+                    <input :value="e.name" @input="e.name=$event.target.value" style="text-align:center; font-size:1vw; width:100%">
+                    <button v-if="reordering == e.id" @click="$store.dispatch('deleteTaskById', reordering); reordering=false;" style="position:absolute; right:1px; top:1px; font-size:9px; border:none; padding: 2px 5px; border-radius:50%">x</button>                    
+                    <!--div @click="reordering=e.id" v-if="reordering == 0" style="position:absolute; right:4px; top: 33%;"><i class="fas fa-arrows-alt"></i></div-->
                 </div>
+                
             </div>
         </div>
     </div>
@@ -180,22 +183,22 @@ body {
 }
 
 .month {	
-	font: 900 10vh "Montserrat", sans-serif;
+	font: 900 5vmin "Montserrat", sans-serif;
 	text-transform: uppercase;	
-	text-align: center;
+	//text-align: center;
 	color: rgba(255, 255, 255, 0.2);
-	text-shadow: 0 0px 4px rgba(0, 0, 0, 0.1);	
-    grid-column: span 7;
-    grid-row: span 5;
+	text-shadow: 0 0px 4px rgba(0, 0, 0, 0.1);	    
     position: absolute;
     bottom:0px;
     width:100%;
+    isolation:isolate;
+    z-index:100;
 }
 
 .main-content {
     display: flex; //grid;    
     flex-wrap: wrap;
-	grid-auto-flow: row;
+    grid-auto-flow: row;    
 	//grid-template-rows: repeat(1000, 170px) 80px;
 	//grid-template-columns: repeat(7, minmax(170px, 1fr));
 }
@@ -203,14 +206,15 @@ body {
 	z-index: 10;	
 	background: rgba(255, 255, 255, 0.4);
 	border-radius: 20px;
-	height: fit-content;
+    height: fit-content;
+    max-height:30%;
     text-align: center;
     width:80%;
     //position:absolute;
-	padding: 1%;
+    padding: 1%;    
 	margin-left: 10%;
     margin-bottom: 1%;
-	font-size: 12px;		    
+	font-size: 0.5vmin;		    
 }
 .date .day{	
 		position: absolute;
@@ -225,10 +229,11 @@ body {
     display: none;
 }
 .events{
-    -ms-overflow-style: none;  /* Internet Explorer 10+ */
-    scrollbar-width: none;  /* Firefox */
+    //-ms-overflow-style: none;  /* Internet Explorer 10+ */
+    //scrollbar-width: none;  /* Firefox */
     overflow-y:scroll; 
     height:75%;
+    
 }
 .moveHere{
     width:100%;
@@ -241,6 +246,7 @@ body {
     }
     text-align:center;
     padding: 18%;
+    z-index:20;
     position:absolute
 }
 

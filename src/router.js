@@ -23,8 +23,7 @@ router.beforeEach((to, from,next)=>{
         routerAuthCheck = new Date().getTime() < expires_at
     }     
     store.state.authenticated = routerAuthCheck        
-    if (to.matched.some(record=>record.path == "/auth0callback")){            
-        debugger
+    if (to.matched.some(record=>record.path == "/auth0callback")){                    
         store.dispatch('auth0HandleAuthentication')        
         next(false)
         return

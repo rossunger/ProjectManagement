@@ -17,6 +17,7 @@ export const TaskTemplate = {
     prereqs: [],
     tags: new Set(),
     color: "#e5e8ff",
+    description:""
 }
 export const PersonTemplate = {    
     name: "",

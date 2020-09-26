@@ -1,10 +1,12 @@
 <template>
-<div style="position:flex" :class="{task: true, done: task.done, moving: task.id==reorderingTasks, reordering: reorderingTasks}">
-    <div v-if="reorderingTasks==0" class="taskTopRight">
+<div style="position:flex" :class="{task: true, done: task.done, moving: task.id==reorderingTasks, reordering: reorderingTasks}">    
+    <div v-if="reorderingTasks==0" class="taskTopRight" @contextmenu.prevent="$emit('start-reorder-task', task.id)">
         <div @click="doDeleteTask($event, task.id)" style="grid-area: 1 / 7"><i style="color:black;" class="fas fa-times-circle"></i></div>        
         <div @click="doClick" v-if="collapsed" style="grid-area: 1 / 6"><i style="color:black;" class="fas fa-chevron-circle-down"></i></div>
         <div @click="doClick" v-if="!collapsed" style="grid-area: 1 / 6"><i style="color:black;" class="fas fa-chevron-circle-left"></i></div>        
-        <div style="grid-area: 1 / 5"><date-button :task="task"/></div>
+        <div style="grid-area: 1 / 5">
+            <date-button :task="task" @contextmenu.stop/>
+        </div>
         <button style="grid-area: 1 / 4" class="unbutton" v-if="!task.done" @click="stopTask(task, true)"><i class="fas fa-clipboard-check"></i></button>
         <button style="grid-area: 1 / 3"  class="unbutton" v-if="!task.done && !task.started" @click="startTask(task)"><i class="fas fa-stopwatch"></i></button>    
         <button style="grid-area: 1 / 3" class="unbutton" v-if="!task.done && task.started" @click="stopTask(task, false)"><i class="fas fa-pause"></i></button>        
@@ -14,12 +16,10 @@
         <button class="unbutton" v-if="task.done" @click="task.done=false"><i class="fas fa-undo-alt"></i></button>                        
         <button style="grid-area: 1 / 1" class="unbutton" @click="$emit('stop-transitions'); $store.state.viewRoot=task.id"><i class="fas fa-search-plus"></i></button>
          
-        <input style="grid-column: 2; grid-row:1" :ref="'t'+task.id" class="big-input" @change="set(task, 'name', $event.target.value);" :value="task.name">                      
-        <div @contextmenu.prevent="$emit('start-reorder-task', task.id)" @click="doClick"
-            style="z-index:-1; position:absolute; right:0px; top:0px; height:100%; width:135px"></div>
+        <input style="grid-column: 2; grid-row:1" :ref="'t'+task.id" class="big-input" @change="set(task, 'name', $event.target.value);" :value="task.name">                              
     </div>    
         <h2 style="text-align:center" v-if="reorderingTasks!=0" class="big-input">{{task.name}}</h2>
-        <!--button style="position:absolute; top:3px; left:3px; border-radius:10px" v-if="reorderingTasks!=0" @click="$emit('reparent-task', taskId)">Reparent</button-->
+        <button style="position:absolute; top:3px; right:3px; border-radius:10px" v-if="reorderingTasks!=0" @click="$emit('reparent-task', taskId)">Reparent</button>
     <button v-if="reorderingTasks && task.parent.tasks && task.parent.tasks[0].id == taskId && reorderingTasks!=taskId" class="reorderHereFirst" @click="$emit('do-reorder-task', 0)">move task here</button>
     
     <div v-if="collapsed" style="margin-top: 30px;">
@@ -51,11 +51,12 @@
 <script>
 //import { getTextWidth } from "./getTextWidth";
 import {DateTime} from "./RossUtils"
+import selectBox from "./selectBox"
 import dateButton from "./dateButton"
 import taskDetails from './taskDetails'
 export default {
     name: "task",
-    components: {dateButton, taskDetails},
+    components: {dateButton, taskDetails, selectBox},
     props: { taskId: Number, reorderingTasks: Number, collapseAll:Number},
     data(){        
         return {
@@ -139,6 +140,10 @@ export default {
                 this.$store.dispatch('deleteTaskById', id)
             else if(confirm('Are you sure you want to delete this task?'))
                 this.$store.dispatch('deleteTaskById', id)
+        },
+        set(obj, prop, value){
+          obj[prop] = value
+          this.$store.dispatch('addUndo')
         }
         
     }
