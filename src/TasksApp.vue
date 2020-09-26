@@ -56,7 +56,7 @@
     <br><br>                    
     
     <h1>Setting</h1>
-    <button v-if="$store.state.authenticated" @click="$store.dispatch('logout')">LOGOUT</button>    
+    <button class="menuTabs" v-if="$store.state.authenticated" @click="$store.dispatch('logout')">LOGOUT</button>    
 </div>     
 <div class="reorderingTasks" v-if="reorderingTasks" @click="reorderingTasks=0"></div>           
 <div class="reparentTask" v-if="reparentTask!=0" @click="reparentTask=0">
@@ -179,8 +179,8 @@ export default {
         }
 
     },    
-    mounted(){
-        this.debug = process.env.VUE_APP_DEBUG
+    mounted(){        
+        process.env.VUE_APP_DEBUG == 'true' ? this.debug = true : this.debug=false
         document.addEventListener('keydown', this.keyDown)                
         
         let setUpdating = function(updating){this.$store.state.updating = updating}.bind(this)                

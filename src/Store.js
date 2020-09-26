@@ -30,7 +30,7 @@ export default createStore({
         updating: false,
         loading:false,
         view: "All",
-        viewMode: 'events',
+        viewMode: 'tree',
         viewFilters:{
             filters: ['leader','type', 'done', 'current', 'parent'],  
             dueTypes:['Overdue', 'Due today', 'Due this week', 'No due date'],
