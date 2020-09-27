@@ -29,9 +29,7 @@ export const DateTime = {
         if (format=='days') format = 1000*60*60*24
         if (format=='weeks') format = 1000*60*60*24*7
         if (format=='months') format = 1000*60*60*24*7*(4 + 1/3)
-        if (format=='years') format = 1000*60*60*24*365.25                        
-        //debugger        
-        //console.log(Math.ceil((d1 - d2) / format))   
+        if (format=='years') format = 1000*60*60*24*365.25                                             
         return Math.ceil((d1 - d2) / format)//1000 / 60 / 60 / 24)+1
     },
     weeksFromToday(d){

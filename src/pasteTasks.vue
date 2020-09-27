@@ -68,13 +68,10 @@ export default {
         },
         commitTasks(){
             this.$store.state.tasks= []
-            this.tasks.forEach(t=>{
-                debugger
+            this.tasks.forEach(t=>{                
                 this.$store.dispatch('createTask', {name: t.name, leader: t.leader, due: t.due, excitement: t.excitement, priority: t.priority, estimatedDuration: t.estimatedDuration})                                                
             })
-            this.$store.state.viewMode="tree"
-            debugger            
-            //this.$store.state.tasks = [...this.$store.state.tasks, ...this.tasks]
+            this.$store.state.viewMode="tree"                    
         },
         doDeleteTask(ev, task){            
             if(ev.ctrlKey)

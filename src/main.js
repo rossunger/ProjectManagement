@@ -11,7 +11,7 @@ app.use(store)
 app.use(router)
 
 
-const socket = io(baseurl)
+const socket = io(baseurl, {query: { env: process.env.VUE_APP_ENV }})
 app.config.globalProperties.$socket = socket
 app.mount("#app") 
 //DEBUG VUEX:

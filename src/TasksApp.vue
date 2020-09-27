@@ -9,7 +9,7 @@
     <div style="display:inline-block; margin:2px;">
         <button class="menuTabs" @click="$store.state.viewMode='tree'; menu=false">Tasks</button>
         <button class="menuTabs" @click="$store.state.viewMode='calendar'; menu=false">Calendar</button>
-        <button v-if="debug" class="menuTabs" @click="$store.state.viewMode='events'; menu=false">Plan Events</button>
+        <!--button class="menuTabs" @click="$store.state.viewMode='events'; menu=false">Plan Events</button-->
         <button class="menuTabs" @click="$store.state.viewMode='people'; menu=false">Manage People</button>        
         <button class="menuTabs" @click="$store.state.viewMode='paste'; menu=false">Paste Action Items</button>
         </div>
@@ -178,18 +178,20 @@ export default {
         }
 
     },    
-    mounted(){                
-        //process.env.VUE_APP_DEBUG == 'true' ? this.debug = true : this.debug=false
-        //console.log(process.env.VUE_APP_DEBUG)
+    mounted(){                        
         document.addEventListener('keydown', this.keyDown)                
-        
+        this.$socket.emit('setRoom', this.$store.state.debug ? 'debug': 'production' )         
         let setUpdating = function(updating){this.$store.state.updating = updating}.bind(this)                
-        let doLoadState = function(data){this.dispatch('loadChart', data)}.bind(this.$store)                
-        // this.$socket.emit('SetChart', 'current')
+        let doLoadState = function(data){this.dispatch('loadChart', data)}.bind(this.$store)                        
         this.$socket.on('PMupdating', data=>setUpdating(data))        
         this.$socket.on('users', (msg)=>console.log(msg))        
         this.$socket.on('PMupdatedState', (data)=>doLoadState(data))
-        this.$socket.emit('PMloadData', this.$store.state.debug ? 'debug': 'current' )         
+        this.$socket.on('PMupdateSuccess', (success)=>{
+            if(!success){
+                alert('failed to save your changes. Please refresh the browser and try again')
+            }
+        })
+        
     },
     methods:{                             
         keyDown(ev){            
@@ -225,7 +227,7 @@ export default {
             handler(){                 
                 if(!this.$store.state.loading){
                     let data = arson.stringify({tasks: this.tasks, lastId: this.$store.state.lastId, people:this.$store.state.people, committees: this.$store.state.committees, tags: this.$store.state.tags})            
-                    this.$socket.emit('PMupdateState', data, this.$store.state.debug ? 'debug' : 'current')                                
+                    this.$socket.emit('PMupdateState', data, this.$store.state.debug ? 'debug' : 'production')                                
                     console.log('tasks updated!')                                        
                 }else 
                     this.$store.state.loading = false

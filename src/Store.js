@@ -31,7 +31,7 @@ export default createStore({
         loading:false,
         view: "All",
         viewMode: 'tree',
-        debug: false,
+        debug: process.env.VUE_APP_ENV,
         viewFilters:{
             filters: ['leader','type', 'done', 'current', 'parent'],  
             dueTypes:['Overdue', 'Due today', 'Due this week', 'No due date'],
@@ -110,8 +110,7 @@ export default createStore({
         }
     },
     actions:{
-        reparentTask({getters}, {task, newParent, newPosition}){            
-            debugger
+        reparentTask({getters}, {task, newParent, newPosition}){                        
             task = getters.taskById(task)
             newParent = getters.taskById(newParent)
             newParent.tasks.splice(newPosition, 0, task)
@@ -120,8 +119,7 @@ export default createStore({
             //newParent.tasks.splice(newPosition, 0, task)
             //task.parent.tasks = task.parent.tasks.filter(c=>{return c!=task})            
         },
-        /*undo({state}){
-            debugger
+        /*undo({state}){            
             if (state.undos.length>0){                      
                 state.redos.push(arson.stringify({tasks: state.tasks, lastId: state.lastId}))          
                 state.tasks = arson.parse(state.undos.pop())
