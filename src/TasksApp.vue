@@ -12,6 +12,7 @@
         <!--button class="menuTabs" @click="$store.state.viewMode='events'; menu=false">Plan Events</button-->
         <button class="menuTabs" @click="$store.state.viewMode='people'; menu=false">Manage People</button>        
         <button class="menuTabs" @click="$store.state.viewMode='paste'; menu=false">Paste Action Items</button>
+        <button class="menuTabs" @click="loadDataFromProduction" v-if="this.$store.state.debug=='debug'">LOAD DATA FROM PRODUCTION</button>
         </div>
     <br><br>
     <h1>Filters</h1><br>
@@ -180,7 +181,7 @@ export default {
     },    
     mounted(){                        
         document.addEventListener('keydown', this.keyDown)                
-        this.$socket.emit('setRoom', this.$store.state.debug ? 'debug': 'production' )         
+        this.$socket.emit('setRoom', this.$store.state.debug == 'debug' ? 'debug': 'production' )         
         let setUpdating = function(updating){this.$store.state.updating = updating}.bind(this)                
         let doLoadState = function(data){this.dispatch('loadChart', data)}.bind(this.$store)                        
         this.$socket.on('PMupdating', data=>setUpdating(data))        
@@ -192,14 +193,17 @@ export default {
             }
         })
         
+        
     },
     methods:{                             
         keyDown(ev){            
             if(ev.ctrlKey && ev.key=='z'){
+                /*
                 if (ev.shiftKey)
                     this.$store.dispatch('redo')
                 else
                     this.$store.dispatch('undo')
+                    */
             }
         },    
         doReorderTask(id){            
@@ -220,6 +224,9 @@ export default {
             this.$refs[name].selectedIndex=0                    
             this.$store.state.viewFilters[name] = []
         },                
+        async loadDataFromProduction(){
+            this.$store.dispatch('loadChart', {data: await PostService.getChart('production')})
+        }
     },    
     watch:{        
         tasks:{
@@ -227,7 +234,7 @@ export default {
             handler(){                 
                 if(!this.$store.state.loading){
                     let data = arson.stringify({tasks: this.tasks, lastId: this.$store.state.lastId, people:this.$store.state.people, committees: this.$store.state.committees, tags: this.$store.state.tags})            
-                    this.$socket.emit('PMupdateState', data, this.$store.state.debug ? 'debug' : 'production')                                
+                    this.$socket.emit('PMupdateState', data, this.$store.state.debug =="debug" ? 'debug' : 'production')                                
                     console.log('tasks updated!')                                        
                 }else 
                     this.$store.state.loading = false

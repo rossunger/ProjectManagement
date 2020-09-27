@@ -52,11 +52,12 @@ export default {
                 if (i[j]=="") i.splice(j,1)
                 //if @leader
                 let leader="";
-                let taskName=""
-                if (i[j].includes('@')){                    
-                    leader = i[j].trim().slice(1, i[j].trim().indexOf(' ')) || ""
-                    taskName = i[j].trim().slice(1+leader.length).trim()
-                    
+                let taskName=""                
+                if (i[j].includes('@')){          
+                    let k = i[j].trim().indexOf(' ') //end of name
+                    leader = i[j].trim().slice(1, k) || ""  //leaders name            
+                    leader = this.$store.getters.personByName(leader) //get the actual person object                    
+                    taskName = i[j].trim().slice(k+1).trim() // get the task name                                        
                 }else{
                     taskName = i[j].trim()
                 }
