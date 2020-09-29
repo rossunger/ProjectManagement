@@ -1,5 +1,5 @@
 <template>
-<div style="position:flex" :class="{task: true, done: task.done, moving: task.id==reorderingTasks, reordering: reorderingTasks}">    
+<div style="position:flex;" :class="{task: true, done: task.done, moving: task.id==reorderingTasks, reordering: reorderingTasks}">    
     <div v-if="reorderingTasks==0" class="taskTopRight" @contextmenu.prevent="$emit('start-reorder-task', task.id)">
         <div @click="doDeleteTask($event, task.id)" style="grid-area: 1 / 7"><i style="color:black;" class="fas fa-times-circle"></i></div>        
         <div @click="doClick" v-if="collapsed" style="grid-area: 1 / 6"><i style="color:black;" class="fas fa-chevron-circle-down"></i></div>
@@ -23,9 +23,20 @@
     <button v-if="reorderingTasks && task.parent.tasks && task.parent.tasks[0].id == taskId && reorderingTasks!=taskId" class="reorderHereFirst" @click="$emit('do-reorder-task', 0)">move task here</button>
     
     <div v-if="collapsed" style="margin-top: 30px;">
-        <div v-for="child in task.tasks" :key="child" :class="{subtask: true, done: child.done}"             
-            :style="{backgroundColor: child.color, display:'grid'}" 
-        >
+        <task v-for="child in task.tasks" :key="child" :class="{done: child.done}"             
+            :style="{backgroundColor: child.color, display:'grid', 'zmargin': '0px', 'padding-bottom': '0px'}"         
+            :taskId="child.id"                 
+            @stop-transitions="$emit('stop-transitions');"
+            @start-reorder-task="$emit('start-reorder-tasl')"
+            @do-reorder-task="$emit('do-reorder-task')"
+            @reparent-task="$emit('reparent-task')"            
+            @collapse-all="(t)=>$emit('collapse-all', t)"
+            :reorderingTasks="reorderingTasks"
+            :collapseAll="collapseAll"  
+        
+        
+        />
+        <!--
             <div @click="$store.dispatch('deleteTaskById', child.id)" style="grid-area: 1 / 6"><i style="color:black;" class="fas fa-times-circle"></i></div>                    
             <div style="grid-area: 1 / 5"><date-button :task="child"/></div>
             <button style="grid-area: 1 / 4" class="unbutton" v-if="!child.done" @click="stopTask(child, true)"><i class="fas fa-clipboard-check"></i></button>
@@ -37,7 +48,8 @@
             <button class="unbutton" style="grid-area: 1 / 3" v-if="child.done" @click="child.done=false"><i class="fas fa-undo-alt"></i></button>                        
             <input :ref="'t'+child.id" class="medium-input" @input="set(child, 'name', $event.target.value)" :value="child.name">                                              
             <button style="grid-area: 1 / 1" class="unbutton" @click="$emit('stop-transitions'); $store.state.viewRoot=child.id"><i class="fas fa-search-plus"></i></button>                                
-        </div>        
+        
+        </div -->   
         <div style="display: inline-block; text-align:center; width:96%; margin:4px; border-radius:10px; border: 1px #999 solid; height:20px; background-color: #DDD" @click="$store.dispatch('createTask', {parent:task})">
             +
         </div>      

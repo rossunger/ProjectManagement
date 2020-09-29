@@ -39,7 +39,7 @@
                 <button class="unbutton" @click.stop="searchTag(tag)">{{tag}}</button>
             </div>                    
         </div>
-        <input style="background-color:#0001" @blur="(ev)=>{if (ev.currentTarget.value != ''){addTag(ev); }}" @keydown="(ev)=>{if (ev.key==',' || ev.key=='enter'){ev.preventDefault(); ev.target.blur()}}">
+        <input style="background-color:#0001" @blur="(ev)=>{if (ev.currentTarget.value != ''){addTag(ev); }}" @keydown="(ev)=>{if (ev.key==',' || ev.keyCode === 13 /* enter */){ev.preventDefault(); ev.target.blur()}}">
         </div>
 </template>
 <script>
@@ -55,7 +55,7 @@ export default {
         formatTime(t){            
             return DateTime.formatTime(t)            
         },        
-        addTag(ev){            
+        addTag(ev){                        
             this.task.tags.add(ev.target.value)
             this.$store.state.tags.add(ev.target.value)
             ev.target.value=""

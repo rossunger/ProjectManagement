@@ -1,15 +1,16 @@
 import {createStore} from "vuex";
 import _, { isArray, isString } from "lodash";
 import {searchJSONForItem, searchJSONForParent, searchJSONandDelete, autoSave} from "./RossUtils.js"
-import {TaskTemplate, PersonTemplate, CommitteeTemplate} from "./consts.js"
+import {TaskTemplate, PersonTemplate, CommitteeTemplate, EventTemplate, ProjectTemplate,} from "./consts.js"
 import dayjs from 'dayjs'
 import arson from 'arson'
 import PostService from "./PostService.js";
 import auth0 from "auth0-js"
 import router from "./router"
+import { stringify } from "querystring";
 
 const AllowedUsers = ["ross93@gmail.com", "jaredempsey@gmail.com", "williams.garry@gmail.com","benpal14@gmail.com",
-"jewelyshanks@gmail.com", "ivy_charles@hotmail.com", "nathandoras@gmail.com", "dclark@nscad.ca", "harley.hefford@gmail.com"]
+"jewelyshanks@gmail.com", "ivy_charles@hotmail.com", "nathandoras@gmail.com", "dclark@nscad.ca", "harley.hefford@gmail.com", "ivycharles123@gmail.com"]
 
 
 function setState(state, newState){
@@ -19,18 +20,21 @@ function setState(state, newState){
 }
 export default createStore({    
     state:{  
-        authenticated:false,
+        authenticated:false,        
         auth0: new auth0.WebAuth({        
             domain: process.env.VUE_APP_AUTH0_CONFIG_DOMAIN,
             clientID: process.env.VUE_APP_AUTH0_CONFIG_CLIENTID,            
-            redirectUri: window.location.href + 'auth0callback',  //'http://192.168.0.146:8080/auth0callback', //process.env.VUE_APP_DOMAINURL + '/auth0callback',
+            redirectUri: window.location.origin + '/auth0callback', //window.location.href + 'auth0callback',  //'http://192.168.0.146:8080/auth0callback', //process.env.VUE_APP_DOMAINURL + '/auth0callback',
             responseType:process.env.VUE_APP_AUTH0_CONFIG_RESPONSETYPE,
-            scope: process.env.VUE_APP_AUTH0_CONFIG_SCOPE
+            scope: process.env.VUE_APP_AUTH0_CONFIG_SCOPE,
+            connection: 'google',
         }),
         updating: false,
+        currentUser: undefined,
+        initialisedChart:false,
         loading:false,
         view: "All",
-        viewMode: 'tree',
+        viewMode: 'tasks',
         debug: process.env.VUE_APP_ENV,
         viewFilters:{
             filters: ['leader','type', 'done', 'current', 'parent'],  
@@ -57,8 +61,12 @@ export default createStore({
         'Google/Research', 'Crunch some numbers'],
         people: [],
         committees:[],
+        projects: [],
+        events: [],
+        admin: [],
         undos: [],
         redos: [],
+        waterfalls: [],
     },
     getters:{  
         taskById: (state,getters) => (id) =>{
@@ -96,6 +104,29 @@ export default createStore({
                 return ret
             }
             return getChildTasks(state)
+        },
+        filterTasks: (state, getters) => (filters = state.viewFilters, tasks = getters.viewRoot.tasks) => {                                               
+            let ret = tasks.filter(t=>{
+                let fail = false;                                
+                Object.values(filters.filters).forEach(f=>{                    
+                    if (filters[f].length>0 && !filters[f].includes(t[f])){                                                                                            
+                        fail=true
+                    }                
+                })   
+                //Search box searches for names and tags
+                if (filters.search && filters.search !=""){                                
+                    fail = fail || !(t.name.toLowerCase().includes(filters.search.toLowerCase()) || Array.from(t.tags).join().toLowerCase().includes(filters.search.toLowerCase()) )
+                }                                
+                //tag select box
+                if (filters.tags.length>0){                                                 
+                    fail = fail || _.intersection(Array.from(t.tags), filters.tags).length==0 //filters.tags.length
+                }                                
+                return fail ? false : true                                   
+            })
+            return ret            
+        },    
+        tasksByTag:(state,getters) => (tag, tasks=getters.allTasks) => {
+            return tasks.filter(t=>t.tags.has(tag))
         },
         personByName: (state) => (name) =>{
             return state.people.find(p=>p.name==name)
@@ -140,16 +171,7 @@ export default createStore({
         addUndo({state, dispatch}){                      
             //state.undos.push(arson.stringify(state.tasks))            
         },                
-        async loadChart({state}, data){            
-            state.loading = true
-            if (data) data = arson.parse(data);
-            else throw 'could not load data!' //: data = arson.parse(await PostService.getChart('current'))        
-            state.tasks = data.tasks
-            state.lastId = data.lastId
-            state.committees = data.committees || state.committees
-            state.people = data.people || state.people
-            state.tags = data.tags || state.tags
-        },
+        
         createTask({dispatch, state}, {name, parent=state, due, leader, excitement, priority,estimatedDuration}){          
             let task = parent.tasks[parent.tasks.push(_.cloneDeep(TaskTemplate)) - 1]
             task.name = name || "newTask"            
@@ -193,9 +215,9 @@ export default createStore({
         deleteTaskById({dispatch, getters}, taskId){
             dispatch('deleteTask', getters.taskById(taskId))
         },               
-        login({state}){                       
-            let k = state.auth0.authorize()
-            
+        login({state}){                  
+            localStorage.setItem('DC_redirectPage', router.currentRoute.value.path) 
+            let k = state.auth0.authorize()            
         },
         auth0HandleAuthentication({state, dispatch}){            
             state.auth0.parseHash((err, authResult) => {                
@@ -212,7 +234,12 @@ export default createStore({
                     localStorage.setItem("access_token", authResult.accessToken)
                     localStorage.setItem("id_token" ,authResult.idToken)
                     localStorage.setItem("expires_at", expiresAt)
-                    router.replace('/')
+                    localStorage.setItem("current_user", authResult.idTokenPayload.email)                    
+                    let page = localStorage.getItem('DC_redirectPage')                
+                    localStorage.removeItem('DC_redirectPage')
+                    //load data here!!
+                    PostService.getChart(state.debug=='debug' ? 'debug' : 'production')
+                    router.replace(page)                                        
                 }
                 else if (err){
                     alert('login failed')
@@ -224,7 +251,8 @@ export default createStore({
             console.log('logging out')            
             localStorage.removeItem("access_token")
             localStorage.removeItem("id_token")
-            localStorage.removeItem("   expires_at")
+            localStorage.removeItem("expires_at")
+            localStorage.removeItem("current_user")
             window.location.href = process.env.VUE_APP_AUTH0_CONFIG_DOMAINURL + "/v2/logout?returnTo=" +process.env.VUE_APP_DOMAINURL+ "&client_id="+process.env.VUE_APP_AUTH0_CONFIG_CLIENTID                                    
         },
         addPerson({state}, name=""){
@@ -313,7 +341,51 @@ export default createStore({
                 committee.members.push(getters.personByName(personName))
             }
         },
-        
+        doNavigate({}, page){
+            router.push(page);
+        },     
+        createEvent({state}, name='New Event'){
+            let e = _.cloneDeep(EventTemplate)
+            e.name = name || 'New Event'
+            state.events.push(e)
+        },
+        createProject({state}, name='New Project'){
+            let p = _.cloneDeep(ProjectTemplate)
+            p.name = name            
+            state.projects.push(p)
+        },
+        stringify({state}, ){
+            return arson.stringify({
+                tasks: state.tasks, 
+                lastId: state.lastId, 
+                people: state.people, 
+                committees: state.committees, 
+                tags: state.tags, 
+                projects: state.projects, 
+                events: state.events,
+            })            
+        },
+        async saveDataToDB({state, dispatch}, {socket}){
+            if(!state.initialisedChart)return
+            if(!state.loading){                    
+                let data = await dispatch('stringify', state)                
+                socket.emit('PMupdateState', data, state.debug =="debug" ? 'debug' : 'production')                                
+                console.log('tasks updated!')                                        
+            }else 
+                state.loading = false
+        },
+        async loadChart({state, dispatch}, data){            
+            state.loading = true                        
+            if (data)data = arson.parse(data);            
+            else throw 'could not load data!' //: data = arson.parse(await PostService.getChart('current'))        
+            state.tasks = data.tasks
+            state.lastId = data.lastId
+            state.committees = data.committees || state.committees
+            state.people = data.people || state.people
+            state.tags = data.tags || state.tags
+            state.events = data.events || state.events
+            state.projects = data.projects || state.projects
+        },
     }
 })
 

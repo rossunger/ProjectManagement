@@ -3,6 +3,7 @@ import axios from "axios";
 //const url= "http://localhost:5000/api/dc/";
 
 //export const baseurl = "http://chartsbackend.herokuapp.com/"
+//export const baseurl = "http://localhost:5000/"
 export const baseurl = "https://dcproject-management-backend.nn.r.appspot.com/"
 const url = baseurl + "api/dc/";
 //const url = "http://localhost:5000/api/dc/"; //"http://chartsbackend.herokuapp.com/api/dc/"
@@ -18,8 +19,8 @@ class PostService {
         data.push((res.data[i].ChartName));                
       }
     }
-    else{                 
-        data[0] = res.data[0].data.text;       
+    else{                       
+        data[0] = res.data[0].data;               
     }
     //console.log(data);
     return(data);        

@@ -8,10 +8,10 @@ input.number{
     color:black; 
     width:fit-content;
     max-width: 95vw;
-    min-width: min(95vw, 350px);
+    min-width: min(95vw, 500px);
     min-height:40px;
     padding:7px;
-    margin:10px;
+    margin:3px;
     border-radius: 10px;
     flex-basis: content;
     z-index:10;    
@@ -35,12 +35,11 @@ input[type=color]{
 }
 .big-input{
     font-size: 18px;
-    font-weight: bold;
+    //font-weight: bold;
     max-width: 90vw;
-    min-width: 40%;
+    min-width: 30vw;//40%;
     height:25px;
-    background-color: #00000015
-    //border:1px black solid;
+    background-color:white;  // #00000015;            
 }
 .medium-input{
     font-size: 15px;

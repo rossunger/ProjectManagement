@@ -7,18 +7,23 @@
 <div @click.self="menu=!menu" v-if="menu" class="menu">                
     <h1>Views</h1><br>
     <div style="display:inline-block; margin:2px;">
-        <button class="menuTabs" @click="$store.state.viewMode='tree'; menu=false">Tasks</button>
-        <button class="menuTabs" @click="$store.state.viewMode='calendar'; menu=false">Calendar</button>
-        <!--button class="menuTabs" @click="$store.state.viewMode='events'; menu=false">Plan Events</button-->
-        <button class="menuTabs" @click="$store.state.viewMode='people'; menu=false">Manage People</button>        
-        <button class="menuTabs" @click="$store.state.viewMode='paste'; menu=false">Paste Action Items</button>
-        <button class="menuTabs" @click="loadDataFromProduction" v-if="this.$store.state.debug=='debug'">LOAD DATA FROM PRODUCTION</button>
+        <button class="menuTabs" @click="navigateTo('overview')">Overview</button>
+        <button class="menuTabs" @click="navigateTo('tasks')">Tasks</button>
+        <button class="menuTabs" @click="navigateTo('calendar')">Calendar</button>
+        <button class="menuTabs" @click="navigateTo('events')">Plan Events</button>
+        <button class="menuTabs" @click="navigateTo('gantt')">Gantt Chart</button>
+        <button class="menuTabs" @click="navigateTo('people')">Manage People</button>                
+        <button class="menuTabs" @click="navigateTo('paste')">Paste Action Items</button>
+        <button class="menuTabs" @click="copyTasksToClipboard" v-if="$store.state.debug=='debug' ||this.$store.state.currentUser=='ross93@gmail.com' ">Copy Tasks To Clipboard</button>
+        <button class="menuTabs" @click="navigateTo('tags')" v-if="$store.state.debug=='debug' ||this.$store.state.currentUser=='ross93@gmail.com' ">Edit Tags</button>
+        <button class="menuTabs" @click="loadDataFromProduction" v-if="$store.state.debug=='debug'">LOAD DATA FROM PRODUCTION</button>
+        <button class="menuTabs" @click="pushDataToProduction" v-if="$store.state.debug=='debug'">PUSH DATA TO PRODUCTION</button>
         </div>
     <br><br>
-    <h1>Filters</h1><br>
+    <h1>Filters</h1> <button v-if="filtering">Clear ALL</button> <br><br>
     Show me the tasks that contain:<br>
     <input placeholder="search..." @click.stop style="border: white 1px solid; color:white" 
-    @input="$store.state.viewFilters.search = $event.target.value"> 
+    @input="$store.state.viewFilters.search = $event.target.value" :value="$store.state.viewFilters.search"> <button v-if="$store.state.viewFilters.search!= ''" @click="$store.state.viewFilters.search=''" style="border-radius:5px; background-color: slateblue; color: white">x</button>
     <br>and are:
     <br><br>
     
@@ -44,6 +49,13 @@
         <button class="clear" @click="$store.state.viewFilters.leader=[...$store.state.people]">All</button>
         <button class="clear" @click="$store.state.viewFilters.leader=[]">clear</button>
         </div><br>
+        <div @click.self="menu=!menu" class="filterSelectParent">                                           
+        <select-box class="filterSelect" :array="$store.state.committees" 
+            :showOne="false" :selected="$store.state.viewFilters.leader" 
+            @changed-multi="(leaders)=>$store.state.viewFilters.leader = leaders" />           
+        <button class="clear" @click="$store.state.viewFilters.leader=[...$store.state.committees]">All</button>
+        <button class="clear" @click="$store.state.viewFilters.leader=[]">clear</button>
+        </div><br>
 
         <div @click.self="menu=!menu" class="filterSelectParent">                 
             <select-box class="filterSelect" :array="Array.from($store.state.tags)" :showOne="false" 
@@ -65,40 +77,50 @@
     <nested-task-tree-task :reparentingId="reparentTask" @reparent-task="doReparentTask" style="margin-left:40px;" v-for="child in tasks" :key="child" :task="child" />
 
 </div>
-<div v-if="$store.state.viewMode=='tree'" @contextmenu.self.prevent="menu=!menu"
+<div v-if="$store.state.viewMode=='tasks'" @contextmenu.self.prevent="menu=!menu"
     style="width:100%; height:100%; min-height:100vh" 
     @dblclick.self="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot})">                    
     <transition-group :name="allowTransition && 'slide-fade' || ''" v-on:after-leave="allowTransition=false">    
     <task :taskId="task.id" 
         v-for="task in tasksTree" :key="task"     
-        :style="{position:'relative', backgroundColor: task.color}"
+        :style="{position:'relative', backgroundColor: task.color, 'margin':'auto!important'}"
         @stop-transitions="allowTransition=false;"
         @start-reorder-task="(id)=>{reorderingTasks=id}"
         @do-reorder-task="doReorderTask"
         @reparent-task="(id)=>reparentTask=id"
         :reorderingTasks="reorderingTasks"
         @collapse-all="(t)=>{if(collapseAll%2==t)collapseAll+=2; else collapseAll++;}"
-        :collapseAll="collapseAll"
+        :collapseAll="collapseAll"        
     />    
         </transition-group>                    
-</div>                
+</div>             
+<div v-if="$store.state.viewMode=='tags'">    
+    <button class="button" @click="addTag">+</button>
+    <div v-for="tag in $store.state.tags" :key="tag">
+        <input :value="tag" @change="$store.state.tags.delete(tag); $store.state.tags.add($event.target.value)"> <button @click="$store.state.tags.delete(tag);">x</button>
+    </div>
+</div>
 <calendar v-if="$store.state.viewMode=='calendar'" style="position: absolute; top:0px; left:0px"/>        
 <paste-tasks v-if="$store.state.viewMode=='paste'" style="position: absolute; top:0px; left:0px"/>        
 <manage-people v-if="$store.state.viewMode=='people'" style="position: absolute; top:0px; left:0px"/>        
+<overview v-if="$store.state.viewMode=='overview'" />        
+<gantt v-if="$store.state.viewMode=='gantt'" />        
 <div v-if="$store.state.viewMode=='events'" @contextmenu.self.prevent="menu=!menu" style="position: absolute; top:0px; left:0px; height: 100vh; width:100vw">
-    <h1 style="margin-top: 50px; margin-left:50px; color:white;">PLANNING EVENTS</h1>
-    <div @contextmenu.prevent class="eventsGrid" style="margin-left:50px; max-width: 100%; overflow-x:scroll; display:grid; color:white" >
+    <h1 style="margin-top: 50px; margin-left:2vw; color:white;">PLANNING EVENTS</h1>
+    <div @contextmenu.prevent class="eventsGrid" style="margin-left:2vw; overflow-x:scroll; display:grid; color:white" >
         
-        <div v-for="(txt, i) in eventChecklist" :key="i" :style="{'grid-area': '1 / ' + (i+1), padding:'10px', border:'red 1px solid'}">
+        <div v-for="(txt, i) in eventChecklist" :key="i" :style="{'grid-area': '1 / ' + (i+1), padding:'10px', border:'red 0px solid'}">
             {{txt}}
         </div>
-        <div v-for="i in 10" :key="i" :style="{'grid-area': '3 / ' + i, border:'red 1px solid' }">
-            <div v-for="(task, j) in eventTasks" :key="j" :style="{'grid-area': i +'/'+j, border:'orange 1px solid'  }">
+        <div v-for="i in 10" :key="i" :style="{'grid-area': '3 / ' + i, border:'red 0px solid' }">
+            <div v-for="(task, j) in eventTasks" :key="j" :style="{'grid-area': i +'/'+j, border:'orange 1px solid', height:'30px', 'line-height':'30px'}">
             <!-- j is the event, and i is the parameters -->
-                <div v-if="i==1" >
+                <div v-if="i==1" style="padding-left:8px">
                     {{task.name}}
                 </div>
-                <input type="date" style="filter: invert(100%)" v-if="i==2">                                    
+                <date-button v-if="i==2" :task="task" />                
+                <span v-if="i==2">{{task.due.toLocaleString('default', { month: 'short', day: 'numeric' })}}</span>
+                <!--input type="date" :valueAsNumber="task.due" @change="task.due=new Date($event.target.value)" style="filter: invert(100%)" v-if="i==2"-->                                    
                 <select-box v-if="i==3" :array="[{name:'location1'},{name: 'to do: make locations work'}]" :showOne="true" />
                 <select-box v-if="i==4" :array="[{name:'car'},{name: 'walk'}]" :showOne="true" />                
                 <!-- to do: add social media post tasks multi-select here -->
@@ -111,6 +133,7 @@
 
 <script>
 import arson from 'arson'
+import router from '@/router'
 import _ from 'lodash'
 import calendar from "./Calendar"
 import PostService from "./PostService";
@@ -121,18 +144,45 @@ import nestedTaskTreeTask from './nestedTaskTreeTask'
 import pasteTasks from './pasteTasks.vue'
 import managePeople from './managePeople.vue'
 import selectBox from "./selectBox"
+import overview from "./overview"
+import gantt from "./gantt"
+import io from 'socket.io-client'
+import {baseurl} from "./PostService"
+const socket = io(baseurl, {query: { env: process.env.VUE_APP_ENV }}) 
+function debounceSaves(save, dispatch, socket){    
+    save.counter++
+    save.timer = undefined
+    dispatch('saveDataToDB', {socket})    
+}
 export default {    
     name: "app",
     data(){
         return{
             menu: false, allowTransition: false, reorderingTasks:0, collapseAll: 0,
             reparentTask: 0, searchParents:"", eventChecklist: ['Name', 'Date', 'Location', 'Transport', 'Social Media Posts', ],            
+            save: {counter: 0, timer: undefined, delay:400}, initialisedChart:false               
         }
     },
     components:{
-        calendar,task, nestedTaskTreeTask, pasteTasks, managePeople, selectBox
+        calendar,task, nestedTaskTreeTask, pasteTasks, managePeople, selectBox, overview, gantt,dateButton
     },
-    computed: { 
+    computed: {                   
+        events: function(){ return this.$store.state.events},
+        projects: function(){ return this.$store.state.projects},
+        committees: function(){  return this.$store.state.committees},
+        people: function(){ return this.$store.state.people},        
+        tags: function(){ return this.$store.state.tags},
+        filtering: function(){            
+            if (this.$store.state.viewFilters.leader.length > 0 ||
+                this.$store.state.viewFilters.type.length > 0||            
+                this.$store.state.viewFilters.done.length > 0 ||
+                this.$store.state.viewFilters.due.length > 0 ||
+                this.$store.state.viewFilters.current.length > 0 ||
+                this.$store.state.viewFilters.parent.length > 0||
+                this.$store.state.viewFilters.tags.length > 0 ||
+                this.$store.state.viewFilters.search != ""
+            )   return true
+        },
         loading: function(){
             return this.$store.state.loading
         },        
@@ -140,9 +190,12 @@ export default {
             return this.$store.state.tasks
         },
         eventTasks: function(){
-            return this.tasks.filter(t=>Array.from(t.tags).includes('_event'))
+            return this.tasks.filter(t=>Array.from(t.tags).includes('event'))
         },
-        tasksTree: function(){           
+        tasksTree: function(){                       
+            let z = this.$store.getters.filterTasks()
+            return z
+            /*
             let filters = this.$store.state.viewFilters            
             let ret = this.$store.getters.viewRoot.tasks.filter(t=>{
                 let fail = false;                
@@ -161,7 +214,8 @@ export default {
                 }                
                 return fail ? false : true                                   
             })
-            return ret            
+            return ret     
+            */       
         },
         viewRootPath: function(){                        
             let id = this.$store.state.viewRoot;
@@ -177,23 +231,23 @@ export default {
             }                                 
             return ret
         }
-
     },    
-    mounted(){                        
+    mounted(){ 
+        if (!this.$store.state.currentUser)this.$store.state.currentUser = localStorage.getItem('current_user')
         document.addEventListener('keydown', this.keyDown)                
-        this.$socket.emit('setRoom', this.$store.state.debug == 'debug' ? 'debug': 'production' )         
+        let x= socket;        
+        socket.emit('setRoom', this.$store.state.debug == 'debug' ? 'debug': 'production' )         
         let setUpdating = function(updating){this.$store.state.updating = updating}.bind(this)                
-        let doLoadState = function(data){this.dispatch('loadChart', data)}.bind(this.$store)                        
-        this.$socket.on('PMupdating', data=>setUpdating(data))        
-        this.$socket.on('users', (msg)=>console.log(msg))        
-        this.$socket.on('PMupdatedState', (data)=>doLoadState(data))
-        this.$socket.on('PMupdateSuccess', (success)=>{
+        let doLoadState = function(data){this.state.initialisedChart=true; this.dispatch('loadChart', data)}.bind(this.$store)                        
+        socket.on('PMupdating', data=>setUpdating(data))        
+        socket.on('users', (msg)=>console.log(msg))        
+        socket.on('PMupdatedState', (data)=>doLoadState(data))
+        socket.on('PMupdateSuccess', (success)=>{
             if(!success){
                 alert('failed to save your changes. Please refresh the browser and try again')
             }
         })
-        
-        
+        socket.on('changes committed', ()=>console.log('changes saved to DB'))                                
     },
     methods:{                             
         keyDown(ev){            
@@ -225,21 +279,64 @@ export default {
             this.$store.state.viewFilters[name] = []
         },                
         async loadDataFromProduction(){
-            this.$store.dispatch('loadChart', {data: await PostService.getChart('production')})
-        }
+            let data = await PostService.getChart('production')                        
+            this.$store.dispatch('loadChart', data)
+        },
+        async pushDataToProduction(){
+            if (confirm("Are you sure you want to overwrite the production data??")){
+                let data = await this.$store.dispatch('stringify')
+                socket.emit('PMupdateState', data, 'production')                   
+            }             
+        },
+        navigateTo(page){
+            this.$store.dispatch('doNavigate', page)
+            this.menu=false;
+        },
+        addTag(){
+            let tag = prompt('Name the tag')
+            this.$store.state.tags.add(tag)
+        },
+        /*
+        copyTasksToClipboard(){       
+            let txt = ""
+            function flattenTasks(t, prefix){
+                let ret = prefix + t + '\n'
+                if(t.tasks){
+                    flatten
+                }
+                
+                return ret
+            }
+            tasksTree.forEach(t=>{
+                txt += flattenTasks(t,'=')
+            })
+            
+            let selBox = document.createElement('textarea');
+            selBox.style.position = 'fixed';
+            selBox.style.left = '0';
+            selBox.style.top = '0';
+            selBox.style.opacity = '0';
+            selBox.value = txt
+            document.body.appendChild(selBox);
+            selBox.focus();
+            selBox.select();
+            document.execCommand('copy');
+            document.body.removeChild(selBox);            
+        },
+        */        
     },    
     watch:{        
-        tasks:{
-            deep:true,
-            handler(){                 
-                if(!this.$store.state.loading){
-                    let data = arson.stringify({tasks: this.tasks, lastId: this.$store.state.lastId, people:this.$store.state.people, committees: this.$store.state.committees, tags: this.$store.state.tags})            
-                    this.$socket.emit('PMupdateState', data, this.$store.state.debug =="debug" ? 'debug' : 'production')                                
-                    console.log('tasks updated!')                                        
-                }else 
-                    this.$store.state.loading = false
-            }
-        },
+        tasks:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, this.save.delay, this.save, this.$store.dispatch, socket); }}},        
+        events:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, this.save.delay, this.save, this.$store.dispatch, socket); }}},        
+        projects:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, this.save.delay, this.save, this.$store.dispatch, socket); }}},        
+        //tasks:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, 500, this.save, this.$store.dispatch, socket); }}},        
+        //tasks:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, 500, this.save, this.$store.dispatch, socket); }}},        
+        //tasks:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, 500, this.save, this.$store.dispatch, socket); }}},        
+        
+        //projects:{ deep:true, handler(){ this.$store.dispatch('saveDataToDB', {socket: socket}) },},        
+        //people:{ deep:true, handler(){ this.$store.dispatch('saveDataToDB', {socket: socket}) },},        
+        //committees:{ deep:true, handler(){ this.$store.dispatch('saveDataToDB', {socket: socket}) },},        
+        //tags:{ deep:true, handler(){ this.$store.dispatch('saveDataToDB', {socket: socket}) },},        
         loading: function(loading){
             if(loading)
                 this.allowTransition = false                                        
@@ -269,6 +366,7 @@ export default {
     color:white; 
     z-index:20; 
     padding:20px;
+    padding-bottom: 100px;
     text-align:center;
 } 
 .menu::-webkit-scrollbar{
@@ -342,10 +440,6 @@ a{
     min-width:fit-content; 
     display: inline-block; 
     vertical-align:top;
-}
-.menuTabs{
-    width: min(30%, 140px); height:60px; margin:2px;
-    border-radius:10px; background-color: slateblue; color:white;
 }
 .eventsGrid::-webkit-scrollbar{
     display:none;

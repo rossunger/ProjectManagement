@@ -17,7 +17,8 @@ export const TaskTemplate = {
     prereqs: [],
     tags: new Set(),
     color: "#e5e8ff",
-    description:""
+    description:"",
+    prereqs: [],
 }
 export const PersonTemplate = {    
     name: "",
@@ -28,3 +29,30 @@ export const CommitteeTemplate = {
     name: "",
     members: []
 }
+export const ProjectTemplate = {
+    name: '',
+    people: [],
+    description: "",
+    status: "",
+    tasks: []
+}
+export const EventTemplate = {
+    name: '',
+    people: [],
+    description: "",
+    status: "",
+    tasks: [],
+    tag: '',
+    doc: ''
+}
+export const WaterfallTemplate = {
+    tasks: []
+
+}
+
+/*
+Example waterfall
+
+Get money => print posters => put up posters
+1 week        2 days            1 day   
+*/

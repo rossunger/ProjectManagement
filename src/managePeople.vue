@@ -2,6 +2,7 @@
 <div> 
     <div>
         <h1>People</h1>  <div class="button" @click="$store.dispatch('addPerson')">+</div><br>
+        <div class="scrollingContainer" style="overflow:scroll; position: relative; max-width:95vw; display:grid; grid-template-columns: repeat(50, 300px); overscroll-behavior: auto;">
         <div class="person" v-for="p in $store.state.people.filter(p=>p.name!='(nobody)').sort((a,b)=>{if (a.name>b.name)return 1; if (b.name>a.name)return -1; return 0 })" :key="p">
             <button @click="$store.dispatch('removePerson', p)" style="position:absolute; top:0px; right:0px">X</button>
             <input :value="p.name" @input="p.name=$event.target.value"><br>
@@ -13,9 +14,11 @@
             </select-->
             <button class="clear" @click="$store.dispatch('setPersonsCommittees', {person:p, committeeNames: []})">clear</button>
         </div>
+        </div>
     </div>
-    <div>
+    <div>        
         <h1>Committees</h1><div class="button" @click="$store.dispatch('addCommittee')">+</div><br>
+        <div class="scrollingContainer" style="overflow:scroll; position: relative; max-width:95vw; display:grid; grid-template-columns: repeat(50, 300px); overscroll-behavior: auto;">
         <div class="person" v-for="c in $store.state.committees.sort((a,b)=>{if (a.name>b.name)return 1; if (b.name>a.name)return -1; return 0 })" :key="c">
             <button @click="$store.dispatch('removeCommittee', c)" style="position:absolute; top:0px; right:0px">X</button>
             <input :value="c.name" @input="c.name=$event.target.value"><br>
@@ -26,6 +29,7 @@
             </select-->
             <button class="clear" @click="$store.dispatch('clearCommitteesPeople', {committee:c})">clear</button>
         </div>        
+        </div>                   
     </div>
 </div>
 </template>
@@ -37,7 +41,7 @@ export default {
 </script>
 <style scoped lang="scss">
 div{
-    margin:20px;
+    margin:1vw;
     //color:white;
 }
 div.button{
@@ -62,7 +66,7 @@ textarea{
     width:100%;
 }
 .person{
-    display:inline-block;
+    //display:inline-block;
     border:purple 1px solid;       
     filter: drop-shadow(5px 5px 2px #4444dd);
     padding:0px;
@@ -94,5 +98,8 @@ option{
     width:100%;
     background-color:slateblue;
     color:white
+}
+.scrollingContainer::-webkit-scrollbar{
+    display:none;
 }
 </style>
