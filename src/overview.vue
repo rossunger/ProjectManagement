@@ -6,8 +6,8 @@
     <div class="category">         
         <div v-for="(event, i) in $store.state.events" :key="event" :style="{'grid-row': 1, 'grid-column': (i+1)}" class="scrollingItem">
             <!--button @click="setEventTag(event)">Set Tag</button-->            
-            <img v-if="event.image" :src="event.image">
-            <div @click="linkImage" class="addImage" v-if="!event.image">(add image)</div>
+            <!--img class="thumbnail" v-if="event.image" :src="event.image"-->
+            <div @click="linkImage(event)" class="addImage" v-if="!event.image">(add image)</div>
             <input @input="event.name = $event.target.value" :value="event.name"><br>
             <textarea @input="event.description = $event.target.value" :value="event.description"/>
             <div v-if="filterEventTasks(event).length>0" style="margin-bottom:2px;">Upcoming Dates:</div>            
@@ -27,8 +27,8 @@
     </div>
     <div class="category">                
         <div v-for="(project, i) in $store.state.projects" :key="project" :style="{'grid-row': 1, 'grid-column': (i+1)}" class="scrollingItem">
-            <img v-if="project.image" :src="project.image">
-            <div @click="linkImage" class="addImage" v-if="!project.image">(add image)</div>
+            <img class="thumbnail" v-if="project.image" :src="project.image">
+            <div @click="linkImage(project)" class="addImage" v-if="!project.image">(add image)</div>
             <input @input="project.name = $event.target.value" :value="project.name"><br>
             <textarea @input="project.description = $event.target.value" :value="project.description"/>
             <br><br><br>
@@ -44,10 +44,11 @@ import selectBox from './selectBox'
 export default {
     name: 'overview', components:{selectBox},    
     methods:{
-        linkImage(){
+        linkImage(parent){
             let link = prompt('Please paste a link to the image')
             if(link){
                 console.log('linking to: ' + link)
+                parent.image = link
                 //this.$store.dispatch('addImage')
             }                            
         },
@@ -95,7 +96,7 @@ input{
     font-size:20px;
 }
 textarea{
-    width:400px;
+    width:250px;
     max-width: 95vw;
     height: 60px;
     border:none;
@@ -157,5 +158,8 @@ div.button{
 }
 .eventname{
     grid-column: 2;
+}
+.thumbnail{
+    max-width: min(100%, 90vw);
 }
 </style>

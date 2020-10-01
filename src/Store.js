@@ -10,7 +10,7 @@ import router from "./router"
 import { stringify } from "querystring";
 
 const AllowedUsers = ["ross93@gmail.com", "jaredempsey@gmail.com", "williams.garry@gmail.com","benpal14@gmail.com",
-"jewelyshanks@gmail.com", "ivy_charles@hotmail.com", "nathandoras@gmail.com", "dclark@nscad.ca", "harley.hefford@gmail.com", "ivycharles123@gmail.com"]
+"jewelyshanks@gmail.com", "ivy_charles@hotmail.com", "nathandoras@gmail.com", "dclark@nscad.ca", "harley.hefford@gmail.com", "ivycharles123@gmail.com", "jacksonc3k@gmail.com", ]
 
 
 function setState(state, newState){
@@ -34,8 +34,9 @@ export default createStore({
         initialisedChart:false,
         loading:false,
         view: "All",
-        viewMode: 'tasks',
+        viewMode: 'overview',
         debug: process.env.VUE_APP_ENV,
+        groupBy: "",
         viewFilters:{
             filters: ['leader','type', 'done', 'current', 'parent'],  
             dueTypes:['Overdue', 'Due today', 'Due this week', 'No due date'],
@@ -85,6 +86,12 @@ export default createStore({
               });              
             return ret
         },
+        tasksByPerson: (state,getters) => (person)=>{
+            return getters.allTasks.filter(t=>t.leader.name == person.name)
+        },
+        tasksByTag: (state,getters) => (tag)=>{
+            return getters.allTasks.filter(t=>t.tags.has(tag))
+        },        
         getTasksOnDate: (state,getters) => (d)=>{                        
             return getters.tasksByDate.filter((t)=>{                                                
                   
@@ -238,7 +245,8 @@ export default createStore({
                     let page = localStorage.getItem('DC_redirectPage')                
                     localStorage.removeItem('DC_redirectPage')
                     //load data here!!
-                    PostService.getChart(state.debug=='debug' ? 'debug' : 'production')
+                    let data = PostService.getChart(state.debug=='debug' ? 'debug' : 'production')
+                    dispatch('loadChart', data)
                     router.replace(page)                                        
                 }
                 else if (err){
@@ -385,6 +393,16 @@ export default createStore({
             state.tags = data.tags || state.tags
             state.events = data.events || state.events
             state.projects = data.projects || state.projects
+        },
+        clearFilters({state}){
+            state.viewFilters.leader = []
+            state.viewFilters.type = []
+            state.viewFilters.done = []
+            state.viewFilters.due = []
+            state.viewFilters.current = []
+            state.viewFilters.parent = []
+            state.viewFilters.tags = []
+            state.viewFilters.search = ""
         },
     }
 })

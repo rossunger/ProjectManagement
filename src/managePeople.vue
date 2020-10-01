@@ -5,6 +5,7 @@
         <div class="scrollingContainer" style="overflow:scroll; position: relative; max-width:95vw; display:grid; grid-template-columns: repeat(50, 300px); overscroll-behavior: auto;">
         <div class="person" v-for="p in $store.state.people.filter(p=>p.name!='(nobody)').sort((a,b)=>{if (a.name>b.name)return 1; if (b.name>a.name)return -1; return 0 })" :key="p">
             <button @click="$store.dispatch('removePerson', p)" style="position:absolute; top:0px; right:0px">X</button>
+            <!--button @click="setEmail" style="position:absolute; top:30px; right:0px">@</button-->
             <input :value="p.name" @input="p.name=$event.target.value"><br>
             Committees:<br> 
             <select-box :array="$store.state.committees" :showOne="false" :selected="p.committees" @changed-multi="(newCommittees)=>{$store.dispatch('setPersonsCommittees', {person: p, committeeNames:newCommittees.map(c=>c.name)})}" />           
@@ -36,7 +37,13 @@
 <script>
 import selectBox from './selectBox'
 export default {
-    name: 'manage-people', components:{selectBox}
+    name: 'manage-people', components:{selectBox},
+    methods:{
+        setEmail(person){
+            let email = prompt('Set email')
+            if (email) person.email = email
+        }
+    }
 }
 </script>
 <style scoped lang="scss">

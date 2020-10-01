@@ -3,6 +3,7 @@
 <div style="padding-left:50px; padding-top: 5px;">        
     <button class="rootNav" v-for="root in viewRootPath" :key="root" @click="allowTransition=false; $store.state.viewRoot=root">{{$store.getters.taskById(root).name || '🏠'}}</button>
     <span style="color:white">&nbsp;{{$store.getters.viewRoot.name || '🏠'}}</span>    
+    
 </div>
 <div @click.self="menu=!menu" v-if="menu" class="menu">                
     <h1>Views</h1><br>
@@ -16,11 +17,15 @@
         <button class="menuTabs" @click="navigateTo('paste')">Paste Action Items</button>
         <button class="menuTabs" @click="copyTasksToClipboard" v-if="$store.state.debug=='debug' ||this.$store.state.currentUser=='ross93@gmail.com' ">Copy Tasks To Clipboard</button>
         <button class="menuTabs" @click="navigateTo('tags')" v-if="$store.state.debug=='debug' ||this.$store.state.currentUser=='ross93@gmail.com' ">Edit Tags</button>
-        <button class="menuTabs" @click="loadDataFromProduction" v-if="$store.state.debug=='debug'">LOAD DATA FROM PRODUCTION</button>
+        <button class="menuTabs" @click="loadData('production')" v-if="$store.state.debug=='debug'">LOAD DATA FROM PRODUCTION</button>
         <button class="menuTabs" @click="pushDataToProduction" v-if="$store.state.debug=='debug'">PUSH DATA TO PRODUCTION</button>
         </div>
     <br><br>
-    <h1>Filters</h1> <button v-if="filtering">Clear ALL</button> <br><br>
+    <h1>Group By</h1>
+    <button class="menuTabs" @click="$store.state.groupBy=''">(none)</button>
+    <button class="menuTabs" @click="$store.state.groupBy='person'">Person/Committee</button>
+    <button class="menuTabs" @click="$store.state.groupBy='tag'">tag</button>    
+    <h1>Filters</h1> <button class="menuTabs" @click="$store.dispatch('clearFilters')" v-if="filtering">Clear ALL</button> <br><br>
     Show me the tasks that contain:<br>
     <input placeholder="search..." @click.stop style="border: white 1px solid; color:white" 
     @input="$store.state.viewFilters.search = $event.target.value" :value="$store.state.viewFilters.search"> <button v-if="$store.state.viewFilters.search!= ''" @click="$store.state.viewFilters.search=''" style="border-radius:5px; background-color: slateblue; color: white">x</button>
@@ -77,7 +82,7 @@
     <nested-task-tree-task :reparentingId="reparentTask" @reparent-task="doReparentTask" style="margin-left:40px;" v-for="child in tasks" :key="child" :task="child" />
 
 </div>
-<div v-if="$store.state.viewMode=='tasks'" @contextmenu.self.prevent="menu=!menu"
+<div v-if="$store.state.viewMode=='tasks' && $store.state.groupBy==''" @contextmenu.self.prevent="menu=!menu"
     style="width:100%; height:100%; min-height:100vh" 
     @dblclick.self="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot})">                    
     <transition-group :name="allowTransition && 'slide-fade' || ''" v-on:after-leave="allowTransition=false">    
@@ -93,7 +98,41 @@
         :collapseAll="collapseAll"        
     />    
         </transition-group>                    
-</div>             
+</div>    
+<div v-if="$store.state.viewMode=='tasks' && $store.state.groupBy=='person'"> 
+    <div v-for="person in [...$store.state.people, ...$store.state.committees]" :key="person">
+        <h1 @click="collapsedPeople.has(person) ? collapsedPeople.delete(person) : collapsedPeople.add(person)" style="text-align:center; color:white; background-color: #3333">{{collapsedPeople.has(person) ? "+ " : "- "}}{{person.name}}</h1><br>        
+        <div v-if="!collapsedPeople.has(person)">
+        <task :taskId="task.id" 
+        v-for="task in $store.getters.filterTasks(undefined, $store.getters.tasksByPerson(person))" :key="task"     
+        :style="{position:'relative', backgroundColor: task.color, 'margin':'auto!important'}"
+        @stop-transitions="allowTransition=false;"
+        @start-reorder-task="(id)=>{reorderingTasks=id}"
+        @do-reorder-task="doReorderTask"
+        @reparent-task="(id)=>reparentTask=id"
+        :reorderingTasks="reorderingTasks"
+        @collapse-all="(t)=>{if(collapseAll%2==t)collapseAll+=2; else collapseAll++;}"
+        :collapseAll="collapseAll"        />            
+        </div>
+    </div>
+</div>
+<div v-if="$store.state.viewMode=='tasks' && $store.state.groupBy=='tag'"> 
+    <div v-for="tag in $store.state.tags" :key="tag">
+        <h1 @click="collapsedTags.has(tag) ? collapsedTags.delete(tag) : collapsedTags.add(tag)" style="text-align:center; color:white; background-color: #3333">{{collapsedTags.has(tag) ? "+ " : "- "}}{{tag}}</h1><br>        
+        <div v-if="!collapsedTags.has(tag)">
+        <task :taskId="task.id" 
+        v-for="task in $store.getters.filterTasks(undefined, $store.getters.tasksByTag(tag))" :key="task"     
+        :style="{position:'relative', backgroundColor: task.color, 'margin':'auto!important'}"
+        @stop-transitions="allowTransition=false;"
+        @start-reorder-task="(id)=>{reorderingTasks=id}"
+        @do-reorder-task="doReorderTask"
+        @reparent-task="(id)=>reparentTask=id"
+        :reorderingTasks="reorderingTasks"
+        @collapse-all="(t)=>{if(collapseAll%2==t)collapseAll+=2; else collapseAll++;}"
+        :collapseAll="collapseAll"        />            
+        </div>
+    </div>
+</div>
 <div v-if="$store.state.viewMode=='tags'">    
     <button class="button" @click="addTag">+</button>
     <div v-for="tag in $store.state.tags" :key="tag">
@@ -160,7 +199,7 @@ export default {
         return{
             menu: false, allowTransition: false, reorderingTasks:0, collapseAll: 0,
             reparentTask: 0, searchParents:"", eventChecklist: ['Name', 'Date', 'Location', 'Transport', 'Social Media Posts', ],            
-            save: {counter: 0, timer: undefined, delay:400}, initialisedChart:false               
+            save: {counter: 0, timer: undefined, delay:400}, initialisedChart:false, collapsedPeople: new Set(), collapsedTags: new Set(),
         }
     },
     components:{
@@ -192,30 +231,9 @@ export default {
         eventTasks: function(){
             return this.tasks.filter(t=>Array.from(t.tags).includes('event'))
         },
-        tasksTree: function(){                       
-            let z = this.$store.getters.filterTasks()
-            return z
-            /*
-            let filters = this.$store.state.viewFilters            
-            let ret = this.$store.getters.viewRoot.tasks.filter(t=>{
-                let fail = false;                
-                Object.values(filters.filters).forEach(f=>{                    
-                    if (filters[f].length>0 && !filters[f].includes(t[f])){                                                                                            
-                        fail=true
-                    }                
-                })   
-                //Search box searches for names and tags
-                if (filters.search !=""){                                
-                    fail = fail || !(t.name.toLowerCase().includes(filters.search.toLowerCase()) || Array.from(t.tags).join().toLowerCase().includes(filters.search.toLowerCase()) )
-                }                
-                //tag select box
-                if (filters.tags.length>0){                                                 
-                    fail = fail || _.intersection(Array.from(t.tags), filters.tags).length==0
-                }                
-                return fail ? false : true                                   
-            })
-            return ret     
-            */       
+        tasksTree: function(){                      
+            if (this.$store.state.groupBy == "")
+                return this.$store.getters.filterTasks()                                           
         },
         viewRootPath: function(){                        
             let id = this.$store.state.viewRoot;
@@ -278,8 +296,8 @@ export default {
             this.$refs[name].selectedIndex=0                    
             this.$store.state.viewFilters[name] = []
         },                
-        async loadDataFromProduction(){
-            let data = await PostService.getChart('production')                        
+        async loadData(chart){
+            let data = await PostService.getChart(chart)                        
             this.$store.dispatch('loadChart', data)
         },
         async pushDataToProduction(){

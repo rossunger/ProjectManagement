@@ -23,7 +23,7 @@ export const TaskTemplate = {
 export const PersonTemplate = {    
     name: "",
     committees: [],
-
+    email: ""
 }
 export const CommitteeTemplate = {    
     name: "",
