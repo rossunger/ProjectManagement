@@ -1,6 +1,6 @@
 <template>
 <div>    
-    <select :disabled="disabled" v-if="showOne" @changed="$emit('changed', $event.target.value)">
+    <select :disabled="disabled" v-if="showOne" @change="$emit('changed', $event.target.value)">
         <option v-for="item in items" :key="item" :selected="item[textParameter] == selected[0][textParameter]" :value="item[textParameter]">{{item[textParameter]}}</option>
     </select>
     <div v-if="!showOne">

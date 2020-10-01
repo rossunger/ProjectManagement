@@ -9,8 +9,8 @@
             <option v-for="type in $store.state.taskTypes" :key="type" :value="type">{{type}}</option>
         </select>            
         
-        <select @change="set(task, 'leader', $store.getters.personByName($event.target.value) || $store.getters.committeeByName($event.target.value) )">
-            <option v-for="person in [...$store.state.people, ...$store.state.committees]" :key="person" :value="person.name" :selected="task.leader==person">{{person.name}}</option>
+        <select @change="set(task, 'leader', $store.getters.personByName($event.target.value) || $store.getters.committeeByName($event.target.value)  )">
+            <option v-for="person in [$store.state.nonePerson, ...$store.state.people, ...$store.state.committees]" :key="person" :value="person.name" :selected="task.leader==person">{{person.name}}</option>
         </select>
         <br>
         <br>        
@@ -31,7 +31,7 @@
         <br>      
         <span>Description: </span><span style="float:right">{{formatTime(task.actualDuration)}}</span><br>
         <textarea :value="task.description" @input="task.description = $event.target.value" />
-            Tags: 
+            <span>Tags: </span><select-box style="display:inline-block; margin-left:10px;" v-if="getTagsArray.length>0" :array="['', ...getTagsArray]" :showOne="true" @changed="tag=>this.task.tags.add(tag)" />
         <div style="display:flex">
         <div v-for="tag in task.tags" :key="tag" style="margin-right:8px;">
             <div @click="clearTag(tag)" style="grid-area: 1 / 7">
@@ -39,15 +39,18 @@
                 <button class="unbutton" @click.stop="searchTag(tag)">{{tag}}</button>
             </div>                    
         </div>
-        <input style="background-color:#0001" @blur="(ev)=>{if (ev.currentTarget.value != ''){addTag(ev); }}" @keydown="(ev)=>{if (ev.key==',' || ev.keyCode === 13 /* enter */){ev.preventDefault(); ev.target.blur()}}">
+        <input v-if="false && $store.state.debug=='debug' || $store.state.currentUser.email =='ross93@gmail.com'" style="background-color:#0001" @blur="(ev)=>{if (ev.currentTarget.value != ''){addTag(ev); }}" @keydown="(ev)=>{if (ev.key==',' || ev.keyCode === 13 /* enter */){ev.preventDefault(); ev.target.blur()}}">        
         </div>
 </template>
 <script>
 import {DateTime} from "./RossUtils"
+import selectBox from "./selectBox"
+import _ from 'lodash'
+import { computed } from 'vue'
 export default {
-    name: 'task-details', 
+    name: 'task-details', components:{selectBox},
     props: {task: Object},
-    methods:{
+    methods:{        
         set(obj, prop, value){
             obj[prop] = value
             this.$store.dispatch('addUndo')
@@ -56,6 +59,7 @@ export default {
             return DateTime.formatTime(t)            
         },        
         addTag(ev){                        
+            debugger
             this.task.tags.add(ev.target.value)
             this.$store.state.tags.add(ev.target.value)
             ev.target.value=""
@@ -71,6 +75,11 @@ export default {
         return{
             priorityColors: ['','#006400', '#008000', '#667C3F', '#D2691E', '#EE8700', '#FF6D00', '#ff1744']
         }
+    },
+    computed:{
+        getTagsArray: function(){
+            return _.difference(Array.from(this.$store.state.tags), Array.from(this.task.tags))
+        },
     }
 }
 </script>

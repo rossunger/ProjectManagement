@@ -48,10 +48,10 @@
             <button class="clear" @click="$store.state.viewFilters.type=[]">clear</button>
         </div><br>
         <div @click.self="menu=!menu" class="filterSelectParent">                                           
-        <select-box class="filterSelect" :array="$store.state.people" 
+        <select-box class="filterSelect" :array="[$store.state.nonePerson, ...$store.state.people]" 
             :showOne="false" :selected="$store.state.viewFilters.leader" 
             @changed-multi="(leaders)=>$store.state.viewFilters.leader = leaders" />           
-        <button class="clear" @click="$store.state.viewFilters.leader=[...$store.state.people]">All</button>
+        <button class="clear" @click="$store.state.viewFilters.leader=[$store.state.nonePerson,...$store.state.people]">All</button>
         <button class="clear" @click="$store.state.viewFilters.leader=[]">clear</button>
         </div><br>
         <div @click.self="menu=!menu" class="filterSelectParent">                                           
@@ -100,8 +100,8 @@
         </transition-group>                    
 </div>    
 <div v-if="$store.state.viewMode=='tasks' && $store.state.groupBy=='person'"> 
-    <div v-for="person in [...$store.state.people, ...$store.state.committees]" :key="person">
-        <h1 @click="collapsedPeople.has(person) ? collapsedPeople.delete(person) : collapsedPeople.add(person)" style="text-align:center; color:white; background-color: #3333">{{collapsedPeople.has(person) ? "+ " : "- "}}{{person.name}}</h1><br>        
+    <div @dblclick="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot, leader: person})" v-for="person in [$store.state.nonePerson, ...$store.state.people, ...$store.state.committees]" :key="person">
+        <h1 @click.stop="collapsedPeople.has(person) ? collapsedPeople.delete(person) : collapsedPeople.add(person)" style="text-align:center; color:white; background-color: #3333; margin:0px; margin-top:10px">{{collapsedPeople.has(person) ? "+ " : "- "}}{{person.name}}</h1><br>        
         <div v-if="!collapsedPeople.has(person)">
         <task :taskId="task.id" 
         v-for="task in $store.getters.filterTasks(undefined, $store.getters.tasksByPerson(person))" :key="task"     
@@ -113,23 +113,24 @@
         :reorderingTasks="reorderingTasks"
         @collapse-all="(t)=>{if(collapseAll%2==t)collapseAll+=2; else collapseAll++;}"
         :collapseAll="collapseAll"        />            
+        
         </div>
     </div>
 </div>
 <div v-if="$store.state.viewMode=='tasks' && $store.state.groupBy=='tag'"> 
-    <div v-for="tag in $store.state.tags" :key="tag">
+    <div @dblclick="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot, tags: [tag]})" v-for="tag in $store.state.tags" :key="tag">
         <h1 @click="collapsedTags.has(tag) ? collapsedTags.delete(tag) : collapsedTags.add(tag)" style="text-align:center; color:white; background-color: #3333">{{collapsedTags.has(tag) ? "+ " : "- "}}{{tag}}</h1><br>        
         <div v-if="!collapsedTags.has(tag)">
-        <task :taskId="task.id" 
-        v-for="task in $store.getters.filterTasks(undefined, $store.getters.tasksByTag(tag))" :key="task"     
-        :style="{position:'relative', backgroundColor: task.color, 'margin':'auto!important'}"
-        @stop-transitions="allowTransition=false;"
-        @start-reorder-task="(id)=>{reorderingTasks=id}"
-        @do-reorder-task="doReorderTask"
-        @reparent-task="(id)=>reparentTask=id"
-        :reorderingTasks="reorderingTasks"
-        @collapse-all="(t)=>{if(collapseAll%2==t)collapseAll+=2; else collapseAll++;}"
-        :collapseAll="collapseAll"        />            
+            <task :taskId="task.id" 
+                v-for="task in $store.getters.filterTasks(undefined, $store.getters.tasksByTag(tag))" :key="task"     
+                :style="{position:'relative', backgroundColor: task.color, 'margin':'auto!important'}"
+                @stop-transitions="allowTransition=false;"
+                @start-reorder-task="(id)=>{reorderingTasks=id}"
+                @do-reorder-task="doReorderTask"
+                @reparent-task="(id)=>reparentTask=id"
+                :reorderingTasks="reorderingTasks"
+                @collapse-all="(t)=>{if(collapseAll%2==t)collapseAll+=2; else collapseAll++;}"
+                :collapseAll="collapseAll"        />            
         </div>
     </div>
 </div>
@@ -347,14 +348,10 @@ export default {
         tasks:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, this.save.delay, this.save, this.$store.dispatch, socket); }}},        
         events:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, this.save.delay, this.save, this.$store.dispatch, socket); }}},        
         projects:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, this.save.delay, this.save, this.$store.dispatch, socket); }}},        
-        //tasks:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, 500, this.save, this.$store.dispatch, socket); }}},        
-        //tasks:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, 500, this.save, this.$store.dispatch, socket); }}},        
-        //tasks:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, 500, this.save, this.$store.dispatch, socket); }}},        
+        people:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, this.save.delay, this.save, this.$store.dispatch, socket); }}},        
+        committees:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, this.save.delay, this.save, this.$store.dispatch, socket); }}},                        
+        tags:{ deep:true, handler(){ if (!this.save.timer){ this.save.timer = setTimeout(debounceSaves, this.save.delay, this.save, this.$store.dispatch, socket); }}},        
         
-        //projects:{ deep:true, handler(){ this.$store.dispatch('saveDataToDB', {socket: socket}) },},        
-        //people:{ deep:true, handler(){ this.$store.dispatch('saveDataToDB', {socket: socket}) },},        
-        //committees:{ deep:true, handler(){ this.$store.dispatch('saveDataToDB', {socket: socket}) },},        
-        //tags:{ deep:true, handler(){ this.$store.dispatch('saveDataToDB', {socket: socket}) },},        
         loading: function(loading){
             if(loading)
                 this.allowTransition = false                                        

@@ -36,7 +36,7 @@ export default createStore({
         view: "All",
         viewMode: 'overview',
         debug: process.env.VUE_APP_ENV,
-        groupBy: "",
+        groupBy: "person",
         viewFilters:{
             filters: ['leader','type', 'done', 'current', 'parent'],  
             dueTypes:['Overdue', 'Due today', 'Due this week', 'No due date'],
@@ -60,11 +60,11 @@ export default createStore({
         'Pick dates/times', 'Watch/Read/Listen/Practice/Study', 'Contact someone',
         'Edit audio/video/image', 'Provide feedback', 'Brainstorm', 'Make/Move thing(s)', 
         'Google/Research', 'Crunch some numbers'],
-        people: [],
+        people: [], 
+        nonePerson: {name: '(unassigned)', committees: [], email: ''},
         committees:[],
         projects: [],
-        events: [],
-        admin: [],
+        events: [],        
         undos: [],
         redos: [],
         waterfalls: [],
@@ -179,7 +179,7 @@ export default createStore({
             //state.undos.push(arson.stringify(state.tasks))            
         },                
         
-        createTask({dispatch, state}, {name, parent=state, due, leader, excitement, priority,estimatedDuration}){          
+        createTask({dispatch, state}, {name, parent=state, due, leader, excitement, priority,estimatedDuration, tags}){          
             let task = parent.tasks[parent.tasks.push(_.cloneDeep(TaskTemplate)) - 1]
             task.name = name || "newTask"            
             state.lastId += 1
@@ -187,11 +187,11 @@ export default createStore({
             task.type = state.taskTypes[0]                        
             task.parent=parent     
             if (due) task.due=due                        
-            if (leader) task.leader=leader; else task.leader = state.people[0];
-                if (excitement) parent.tasks[i].excitement=excitement
-            if (priority) parent.tasks[i].priority=priority
-            if (estimatedDuration) parent.tasks[i].estimatedDuration=estimatedDuration
-            
+            if (leader) task.leader=leader; else task.leader = state.nonePerson
+            if (excitement) task.excitement=excitement
+            if (priority) task.priority=priority
+            if (estimatedDuration) task.estimatedDuration=estimatedDuration
+            if (tags) tags.forEach(t=>{task.tags.add(t)})
             dispatch('addUndo')
         },   
         setTaskValues({},{task, name, type}){
