@@ -56,7 +56,7 @@ export default {
                 if (i[j].includes('@')){          
                     let k = i[j].trim().indexOf(' ') //end of name
                     leader = i[j].trim().slice(1, k) || ""  //leaders name            
-                    leader = this.$store.getters.personByName(leader) //get the actual person object                    
+                    leader = this.$store.getters.personByName(leader) || this.$store.getters.committeeByName(leader) //get the actual person object                                        
                     taskName = i[j].trim().slice(k+1).trim() // get the task name                                        
                 }else{
                     taskName = i[j].trim()
