@@ -6,7 +6,7 @@
     <div class="category">         
         <div v-for="(event, i) in $store.state.events" :key="event" :style="{'grid-row': 1, 'grid-column': (i+1)}" class="scrollingItem">
             <!--button @click="setEventTag(event)">Set Tag</button-->            
-            <!--img class="thumbnail" v-if="event.image" :src="event.image"-->
+            <img class="thumbnail" v-if="event.image" :src="event.image">
             <div @click="linkImage(event)" class="addImage" v-if="!event.image">(add image)</div>
             <input @input="event.name = $event.target.value" :value="event.name"><br>
             <textarea @input="event.description = $event.target.value" :value="event.description"/>
@@ -36,7 +36,7 @@
             <div v-if="editing" @click="setDoc(project)" style="position:absolute; right:65px; bottom:5px; background-color: #FFF3; padding:5px; border-radius:10px;">Set Link</div>
         </div>
     </div>  
-    <div v-if="$store.state.currentUser == 'ross93@gmail.com' || $store.state.debug=='debug'" class="button" style="font-size:6px; line-height:8px; padding-top:4px; margin-left:20px; display:inline-block" @click="editing=!editing">{{editing ? "Done Editing" : "Edit Links"}}</div>  
+    <div v-if="$store.state.debug=='debug' || $store.state.currentUser == $store.getters.personByNam('Ross')" class="button" style="font-size:6px; line-height:8px; padding-top:4px; margin-left:20px; display:inline-block" @click="editing=!editing">{{editing ? "Done Editing" : "Edit Links"}}</div>  
 </div>
 </template>
 <script>
@@ -160,6 +160,7 @@ div.button{
     grid-column: 2;
 }
 .thumbnail{
-    max-width: min(100%, 90vw);
+    max-width: min(60%, 90vw);
+    object-fit: contain;
 }
 </style>

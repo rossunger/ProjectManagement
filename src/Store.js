@@ -1,7 +1,7 @@
 import {createStore} from "vuex";
 import _, { isArray, isString } from "lodash";
 import {searchJSONForItem, searchJSONForParent, searchJSONandDelete, autoSave} from "./RossUtils.js"
-import {TaskTemplate, PersonTemplate, CommitteeTemplate, EventTemplate, ProjectTemplate,} from "./consts.js"
+import {TaskTemplate, PersonTemplate, CommitteeTemplate, EventTemplate, ProjectTemplate, WaterfallTemplate} from "./consts.js"
 import dayjs from 'dayjs'
 import arson from 'arson'
 import PostService from "./PostService.js";
@@ -37,12 +37,14 @@ export default createStore({
         viewMode: 'overview',
         debug: process.env.VUE_APP_ENV,
         groupBy: "person",
+        sortBy: ['due', 'estimatedDuration', 'type'],
+        sortOptions:['due', 'estimatedDuration', 'type', 'excitement', 'priority', 'tags'],
         viewFilters:{
             filters: ['leader','type', 'done', 'current', 'parent'],  
             dueTypes:['Overdue', 'Due today', 'Due this week', 'No due date'],
             leader: [],
             type: [],
-            done: [],
+            done: [false],
             due: [],
             current: [],
             parent: [],
@@ -56,10 +58,9 @@ export default createStore({
         tasks:[
             
         ],        
-        taskTypes: ['(none)', 'Make a list', 'Draft some text', 'Go Somewhere',
-        'Pick dates/times', 'Watch/Read/Listen/Practice/Study', 'Contact someone',
-        'Edit audio/video/image', 'Provide feedback', 'Brainstorm', 'Make/Move thing(s)', 
-        'Google/Research', 'Crunch some numbers'],
+        taskTypes: ['(none)', 'Brainstorm', 'Draft', 'Research', 'Contact', 'Review/Approve',
+        'Go somwhere', 'Choose',  'Edit/Refine/Finalize', 'Make/Move phyiscal things', 
+        'Calculate', 'List',], 
         people: [], 
         nonePerson: {name: '(unassigned)', committees: [], email: ''},
         committees:[],
@@ -91,7 +92,25 @@ export default createStore({
         },
         tasksByTag: (state,getters) => (tag)=>{
             return getters.allTasks.filter(t=>t.tags.has(tag))
-        },        
+        },     
+        tasksSortedBy:(state, getters) => (tasks = getters.allTasks, sortBy) => {                        
+            if (!sortBy) sortBy = state.sortBy
+            return tasks.sort((a,b)=>{return a[sortBy[0]] - b[sortBy[0]]})
+            /*
+            let sort0 = []
+            if (sortBy[0]){
+                sort0 = tasks.sort((a,b)=>{
+                    return a[sortBy[0]] - b[sortBy[0]]
+                })
+                if (sortBy[1]){
+                    //Sort within each category
+                    if (sortBy[2]){
+                        //Sort within each category
+                    }
+                }
+            }        
+            return     */
+        },
         getTasksOnDate: (state,getters) => (d)=>{                        
             return getters.tasksByDate.filter((t)=>{                                                
                   
@@ -137,6 +156,9 @@ export default createStore({
         },
         personByName: (state) => (name) =>{
             return state.people.find(p=>p.name==name)
+        },
+        personByEmail: (state) => (email) =>{
+            return state.people.find(p=>p.email==email)
         },
         committeeByName: (state) => (name) =>{            
             return state.committees.find(c=>c.name==name)
@@ -382,7 +404,7 @@ export default createStore({
             }else 
                 state.loading = false
         },
-        async loadChart({state, dispatch}, data){            
+        async loadChart({state, getters, dispatch}, data){            
             state.loading = true                        
             if (data)data = arson.parse(data);            
             else throw 'could not load data!' //: data = arson.parse(await PostService.getChart('current'))        
@@ -392,7 +414,12 @@ export default createStore({
             state.people = data.people || state.people
             state.tags = data.tags || state.tags
             state.events = data.events || state.events
-            state.projects = data.projects || state.projects
+            state.projects = data.projects || state.projects                    
+            if (state.debug=='debug') 
+                state.currentUser = getters.personByName('Ross')
+            if (state.currentUser && state.currentUser.theme.back){                
+                document.documentElement.style.setProperty('--back', state.currentUser.theme.back)
+            }
         },
         clearFilters({state}){
             state.viewFilters.leader = []
@@ -403,6 +430,11 @@ export default createStore({
             state.viewFilters.parent = []
             state.viewFilters.tags = []
             state.viewFilters.search = ""
+        },
+        createWaterfall({state}, {name = "New Waterfall"}){
+            let w = _.cloneDeep(WaterfallTemplate)
+            state.waterfalls.push(w)            
+            w.name = name
         },
     }
 })

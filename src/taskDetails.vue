@@ -5,13 +5,17 @@
         <!--select @change="task.parentId=$event.target.value">
             <option v-for="parent in $store.state.tasks" :key="parent" :value="parent">{{$store.getters.Task(parent)}}</option>
         </select-->                        
-        <select @change="set(task, 'type', $event.target.value)">
-            <option v-for="type in $store.state.taskTypes" :key="type" :value="type">{{type}}</option>
-        </select>            
-        
-        <select @change="set(task, 'leader', $store.getters.personByName($event.target.value) || $store.getters.committeeByName($event.target.value)  )">
+        <div style="display:inline-block">
+        <select-box style="display: inline-block; min-width:45%; width: 250px; max-width:99%" :array="$store.state.taskTypes" 
+            :showOne="true" :selected="[{name: task.type}]" 
+            @changed="(type)=>task.type = type" />           
+        <select-box style="display: inline-block; min-width:45%; width: 250px; max-width:99%" :array="[...$store.state.people, ...$store.state.committees]" 
+            :showOne="true" :selected="[task.leader]" 
+            @changed="(leader)=>task.leader = leader" />     
+        </div>
+        <!--select @change="set(task, 'leader', $store.getters.personByName($event.target.value) || $store.getters.committeeByName($event.target.value)  )">
             <option v-for="person in [$store.state.nonePerson, ...$store.state.people, ...$store.state.committees]" :key="person" :value="person.name" :selected="task.leader==person">{{person.name}}</option>
-        </select>
+        </select-->
         <br>
         <br>        
         <div style="width:fit-content; display: inline-block;">
@@ -31,15 +35,15 @@
         <br>      
         <span>Description: </span><span style="float:right">{{formatTime(task.actualDuration)}}</span><br>
         <textarea :value="task.description" @input="task.description = $event.target.value" />
-            <span>Tags: </span><select-box style="display:inline-block; margin-left:10px;" v-if="getTagsArray.length>0" :array="['', ...getTagsArray]" :showOne="true" @changed="tag=>this.task.tags.add(tag)" />
+            <span>Tags: </span>
+            <select-box style="display:inline-block; margin-left:10px;" v-if="getTagsArray.length>0" :array="['', ...getTagsArray]" :showOne="true" @changed="tag=>this.task.tags.add(tag)" />
         <div style="display:flex">
-        <div v-for="tag in task.tags" :key="tag" style="margin-right:8px;">
-            <div @click="clearTag(tag)" style="grid-area: 1 / 7">
-                <i style="color:black;" class="fas fa-times-circle"></i>
-                <button class="unbutton" @click.stop="searchTag(tag)">{{tag}}</button>
-            </div>                    
-        </div>
-        <input v-if="false && $store.state.debug=='debug' || $store.state.currentUser.email =='ross93@gmail.com'" style="background-color:#0001" @blur="(ev)=>{if (ev.currentTarget.value != ''){addTag(ev); }}" @keydown="(ev)=>{if (ev.key==',' || ev.keyCode === 13 /* enter */){ev.preventDefault(); ev.target.blur()}}">        
+            <div v-for="tag in task.tags" :key="tag" style="margin-right:8px;">
+                <div @click="clearTag(tag)" style="grid-area: 1 / 7">
+                    <i style="color:black;" class="fas fa-times-circle"></i>
+                    <button class="unbutton" @click.stop="searchTag(tag)">{{tag}}</button>
+                </div>                    
+            </div>           
         </div>
 </template>
 <script>

@@ -5,7 +5,7 @@
     min-height: 100%;
     width: fit-content;
     min-width: 100%;  
-    background-color: $back;        
+    background-color: var(--back); //$back;        
     z-index: -1;         
     position: fixed;
     width:100vw;
@@ -16,7 +16,7 @@
     margin: 0px;    
     height: 100%;
     width: 100%;  
-    background-color: $back;        
+    background-color: var(--back); //$back;        
     z-index: -1;         
 }
 body{
@@ -32,7 +32,8 @@ body::-webkit-scrollbar {
 }
 .menuTabs{
     width: min(30%, 140px); height:60px; margin:2px;
-    border-radius:10px; background-color: slateblue; color:white;
+    border-radius:10px; background-color:var(--back); //$back; 
+    color:white;
 }
        
 :not(textarea):not(input):not(svg){       

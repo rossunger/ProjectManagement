@@ -46,7 +46,7 @@ router.beforeEach((to, from,next)=>{
         let expires_at = JSON.parse(localStorage.getItem('expires_at'))
         routerAuthCheck = new Date().getTime() < expires_at
     }     
-    store.state.authenticated = routerAuthCheck    
+    store.state.authenticated = routerAuthCheck                    
     if (store.state.debug =='debug') store.state.authenticated = true;
     if (to.matched.some(record=>record.path == "/auth0callback")){                                    
         store.dispatch('auth0HandleAuthentication')        

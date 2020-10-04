@@ -52,19 +52,27 @@ export default {
                 if (i[j]=="") i.splice(j,1)
                 //if @leader
                 let leader="";
-                let taskName=""                
+                let taskName= i[j].trim()                
                 if (i[j].includes('@')){          
-                    let k = i[j].trim().indexOf(' ') //end of name
-                    leader = i[j].trim().slice(1, k) || ""  //leaders name            
+                    let k = taskName.indexOf(' ') //end of name
+                    leader = taskName.slice(1, k) || ""  //leaders name            
                     leader = this.$store.getters.personByName(leader) || this.$store.getters.committeeByName(leader) //get the actual person object                                        
-                    taskName = i[j].trim().slice(k+1).trim() // get the task name                                        
-                }else{
-                    taskName = i[j].trim()
+                    taskName = taskName.slice(k+1).trim() // get the task name                                        
+                }                
+                let taskType = TaskTemplate.type
+                if (taskName.includes('~')){                    
+                    let k = taskName.indexOf(' ') //end of name
+                    taskType = taskName.slice(1, k) || ""  //task type                
+                    taskType = this.$store.state.taskTypes.find(tt=>{
+                        return tt.toUpperCase().includes(taskType.toUpperCase())
+                    })              
+                    taskName = taskName.slice(1).trim() // get the task name                                                                                      
                 }
-                
-                this.tasks.push(_.cloneDeep(TaskTemplate))
-                this.tasks[this.tasks.length-1].name = taskName
-                this.tasks[this.tasks.length-1].leader = leader                   
+                let newTask = _.cloneDeep(TaskTemplate)                
+                this.tasks.push(newTask)
+                newTask.name = taskName
+                newTask.leader = leader                   
+                newTask.type = taskType
             }                                  
         },
         commitTasks(){

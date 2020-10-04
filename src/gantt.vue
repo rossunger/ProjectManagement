@@ -1,12 +1,15 @@
 <template>
 <h1 style="color:white; margin-left:2vw">Gantt</h1>
-<div style="width: 95vw; overflow-x:scroll; position: sticky; left:2vw; margin-top: 3vh; display:grid">    
+<div style="width: 95vw; overflow-x:scroll; position: sticky; left:2vw; margin-top: 3vh; display:grid">        
     <div class='container'>        
-        <div v-for="(task,j) in $store.getters.allTasks" :key="task" :style="{overflow:'hidden', position: 'sticky', left: '0px', 'grid-column':1, 'grid-row':(j+2)}">{{task.name}}</div>        
+        <div v-for="(waterfall,j) in $store.state.waterfalls" :key="waterfall" :style="{overflow:'hidden', position: 'sticky', left: '0px', 'grid-column':1, 'grid-row':(j+2), 'border-bottom': '1px black solid'}">
+            <input @changed="waterfall.name=$event.target.value" :value="waterfall.name">
+        </div>        
         <div v-for="i in 50" :key="i" class='ganttItem' :style="{'grid-row':1,'grid-column': i+1}">
         {{i}}
         <div v-for="(task,j) in $store.getters.allTasks" :key="task" :style="{'grid-column':i, 'grid-row':(j+2)}">{{task.done ? '[X]' : '[]'}}</div>
         </div>                
+        <button @click="$store.dispatch('createWaterfall', {})">+</button>
     </div>
 </div>
 </template>
@@ -32,7 +35,7 @@ export default {
     overflow: scroll;    
     height:90vh;
     scroll-behavior: smooth;
-    display: grid;
+    display: grid;    
     grid-template-columns: 250px repeat(50, 30px);
     grid-template-rows: repeat(50, 20px);    
 }

@@ -12,10 +12,12 @@ export default {
 
 </script>
 <style lang="scss">
+@use "./CSS/consts.scss" as *;
 #app{
-    background-color:slateblue;
+    //background-color:var(--back);
     width:100%;
     height:100%;    
+    z-index:-10;
     //position:fixed;
     //text-align: center;    
     

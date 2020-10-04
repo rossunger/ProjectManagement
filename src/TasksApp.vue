@@ -1,5 +1,5 @@
 <template>        
-<div style="position:fixed; top:2px; left:2px; z-index:100; background-color: #44A; padding:7px; border-radius:20px; color:white" @click.self="menu=!menu" v-if="!menu">||||  </div>        
+<div style="position:fixed; top:2px; left:2px; z-index:100; background-color: #4449; padding:7px; border-radius:20px; color:white" @click.self="menu=!menu" v-if="!menu">||||  </div>        
 <div style="padding-left:50px; padding-top: 5px;">        
     <button class="rootNav" v-for="root in viewRootPath" :key="root" @click="allowTransition=false; $store.state.viewRoot=root">{{$store.getters.taskById(root).name || '🏠'}}</button>
     <span style="color:white">&nbsp;{{$store.getters.viewRoot.name || '🏠'}}</span>    
@@ -15,8 +15,8 @@
         <button class="menuTabs" @click="navigateTo('gantt')">Gantt Chart</button>
         <button class="menuTabs" @click="navigateTo('people')">Manage People</button>                
         <button class="menuTabs" @click="navigateTo('paste')">Paste Action Items</button>
-        <button class="menuTabs" @click="copyTasksToClipboard" v-if="$store.state.debug=='debug' ||this.$store.state.currentUser=='ross93@gmail.com' ">Copy Tasks To Clipboard</button>
-        <button class="menuTabs" @click="navigateTo('tags')" v-if="$store.state.debug=='debug' ||this.$store.state.currentUser=='ross93@gmail.com' ">Edit Tags</button>
+        <button class="menuTabs" @click="copyTasksToClipboard" v-if="$store.state.debug=='debug' ||this.$store.state.currentUser == this.$store.getters.personByName('Ross') ">Copy Tasks To Clipboard</button>
+        <button class="menuTabs" @click="navigateTo('tags')" v-if="$store.state.debug=='debug' ||this.$store.state.currentUser == this.$store.getters.personByName('Ross') ">Edit Tags</button>
         <button class="menuTabs" @click="loadData('production')" v-if="$store.state.debug=='debug'">LOAD DATA FROM PRODUCTION</button>
         <button class="menuTabs" @click="pushDataToProduction" v-if="$store.state.debug=='debug'">PUSH DATA TO PRODUCTION</button>
         </div>
@@ -25,10 +25,22 @@
     <button class="menuTabs" @click="$store.state.groupBy=''">(none)</button>
     <button class="menuTabs" @click="$store.state.groupBy='person'">Person/Committee</button>
     <button class="menuTabs" @click="$store.state.groupBy='tag'">tag</button>    
+    <h1>Sort By</h1>
+    <div style="max-width:300px; text-align:center; margin:auto;">
+    <select-box class="sortBy" :array="$store.state.sortOptions" 
+            :showOne="true" :selected="[{name: $store.state.sortBy[0]}]" 
+            @changed="(sortBy)=>$store.state.sortBy[0] = sortBy" />           
+    <!--select-box class="sortBy" :array="$store.state.sortOptions" 
+            :showOne="true" :selected="[{name: $store.state.sortBy[1]}]" 
+            @changed="(sortBy)=>$store.state.sortBy[1] = sortBy" />
+    <select-box class="sortBy" :array="$store.state.sortOptions" 
+            :showOne="true" :selected="[{name: $store.state.sortBy[2]}]" 
+            @changed="(sortBy)=>$store.state.sortBy[2] = sortBy" / -->           
+    </div>
     <h1>Filters</h1> <button class="menuTabs" @click="$store.dispatch('clearFilters')" v-if="filtering">Clear ALL</button> <br><br>
     Show me the tasks that contain:<br>
     <input placeholder="search..." @click.stop style="border: white 1px solid; color:white" 
-    @input="$store.state.viewFilters.search = $event.target.value" :value="$store.state.viewFilters.search"> <button v-if="$store.state.viewFilters.search!= ''" @click="$store.state.viewFilters.search=''" style="border-radius:5px; background-color: slateblue; color: white">x</button>
+    @input="$store.state.viewFilters.search = $event.target.value" :value="$store.state.viewFilters.search"> <button v-if="$store.state.viewFilters.search!= ''" @click="$store.state.viewFilters.search=''" class="menuTabs" style="border-radius:5px; width:25px; height:25px">x</button>
     <br>and are:
     <br><br>
     
@@ -104,7 +116,7 @@
         <h1 @click.stop="collapsedPeople.has(person) ? collapsedPeople.delete(person) : collapsedPeople.add(person)" style="text-align:center; color:white; background-color: #3333; margin:0px; margin-top:10px">{{collapsedPeople.has(person) ? "+ " : "- "}}{{person.name}}</h1><br>        
         <div v-if="!collapsedPeople.has(person)">
         <task :taskId="task.id" 
-        v-for="task in $store.getters.filterTasks(undefined, $store.getters.tasksByPerson(person))" :key="task"     
+        v-for="task in $store.getters.tasksSortedBy($store.getters.filterTasks(undefined, $store.getters.tasksByPerson(person)))" :key="task"     
         :style="{position:'relative', backgroundColor: task.color, 'margin':'auto!important'}"
         @stop-transitions="allowTransition=false;"
         @start-reorder-task="(id)=>{reorderingTasks=id}"
@@ -252,7 +264,7 @@ export default {
         }
     },    
     mounted(){ 
-        if (!this.$store.state.currentUser)this.$store.state.currentUser = localStorage.getItem('current_user')
+        if (!this.$store.state.currentUser)this.$store.state.currentUser = this.$store.getters.personByEmail(localStorage.getItem('current_user'))
         document.addEventListener('keydown', this.keyDown)                
         let x= socket;        
         socket.emit('setRoom', this.$store.state.debug == 'debug' ? 'debug': 'production' )         
@@ -266,7 +278,7 @@ export default {
                 alert('failed to save your changes. Please refresh the browser and try again')
             }
         })
-        socket.on('changes committed', ()=>console.log('changes saved to DB'))                                
+        socket.on('changes committed', ()=>console.log('changes saved to DB'))                                        
     },
     methods:{                             
         keyDown(ev){            
@@ -362,7 +374,11 @@ export default {
 </script>
 <style lang="scss">
 @use "./CSS/main.scss" as *;
-//@use "vue-select/src/scss/vue-select.scss" as *;
+@use "./CSS/consts.scss" as *;
+:root{
+    --back: slateblue; //$back;
+}
+
 .rootNav{
     background-color: #0004;
     font-size:18px;
@@ -439,7 +455,7 @@ a{
 }
 .clear{
     width:50%;
-    background-color:slateblue;
+    background-color: var(--back);
     color:white
 }
 .filterSelect{
@@ -458,5 +474,8 @@ a{
 }
 .eventsGrid::-webkit-scrollbar{
     display:none;
+}
+.sortBy option{
+    background-color:#000B;
 }
 </style>

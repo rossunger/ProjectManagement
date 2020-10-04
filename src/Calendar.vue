@@ -3,7 +3,8 @@
     <div :style="{color: '#5598','line-height':'30px','text-align': 'center', 'z-index':20,left: i*(100/7)+'vw', top: '0px', position:'fixed', width:100/7+'vw', height:'30px', 'background':'tranparent', outline: '1px grey '}"  v-for="(theday, i) in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" :key="theday">        
         {{theday}}
     </div>
-    <div @click="reordering=0" class="date" :style="calculateStyle(d)" v-for="d in 356" :key="d" @dblclick.self="createTaskOnDay(d)" >            
+    <div @click="reordering=0" class="date"  v-for="d in 356" :key="d" @dblclick.self="createTaskOnDay(d)" >            
+        <div class="back" :style="calculateStyle(d)"> </div>
         <div class="moveHere" v-if="reordering && !($store.getters.taskById(reordering).due.toDateString() == new Date(calendarStart + ((d-1)*24*60*60*1000)).toDateString())" @click="$store.getters.taskById(reordering).due = new Date(calendarStart+((d-1) * 1000*60*60*24)); reordering=0;">Move here</div>                
         {{dayOfTheMonth(d)}}
         <div class="month" v-if="dayOfTheMonth(d)==1">{{monthOfTheYear(d)}}</div>
@@ -12,7 +13,7 @@
                 style="position:absolute; left:50%; bottom: -3px; font-size:2vmin">
                 <i class="fas fa-sort-down"></i>
             </div>
-            <div class="event" :style="{top: (i-1)*15 + '%'}" v-for="(e, i) in $store.getters.filterTasks(undefined, $store.getters.getTasksOnDate(new Date(calendarStart+((d-1) * 1000*60*60*24))))" :key="e">
+            <div class="event" :style="{top: (i-1)*15 + '%', 'background-color': e.tags.has('event') ? eventColor : e.tags.has('meeting') ? meetingColor: ''}" v-for="(e, i) in $store.getters.filterTasks(undefined, $store.getters.getTasksOnDate(new Date(calendarStart+((d-1) * 1000*60*60*24))))" :key="e">
                 <div style="position:relative;">
                     <input @contextmenu.prevent="editTask(e.id)" :value="e.name" @input="e.name=$event.target.value" style="text-align:center; font-size:1vw; width:100%">
                     <button v-if="reordering == e.id" @click="$store.dispatch('deleteTaskById', reordering); reordering=false;" style="position:absolute; right:1px; top:1px; font-size:9px; border:none; padding: 2px 5px; border-radius:50%">x</button>                    
@@ -47,7 +48,7 @@ export default {
     name: "calendar",
     data(){
         return{
-            dragging:"", menu: false, reordering: false,
+            dragging:"", menu: false, reordering: false, eventColor: '#DD3', meetingColor: '#7DF'
         }
     },
     computed: {
@@ -107,7 +108,14 @@ body {
     //display:inline-block;    
     width: 14.28571vw;
     height: 10vw;
+ 
+}
+.date .back{    
+    width:100%;
+    height:100%;    
+    position:absolute;
     border: 1px solid #CA7676;
+    z-index: -1;
 }
 
 .month {	

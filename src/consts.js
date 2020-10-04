@@ -23,7 +23,10 @@ export const TaskTemplate = {
 export const PersonTemplate = {    
     name: "",
     committees: [],
-    email: ""
+    email: "",
+    theme:{
+        back: 'slateblue'
+    }
 }
 export const CommitteeTemplate = {    
     name: "",
@@ -34,7 +37,7 @@ export const ProjectTemplate = {
     people: [],
     description: "",
     status: "",
-    tasks: []
+    tasks: [],
 }
 export const EventTemplate = {
     name: '',
@@ -46,8 +49,8 @@ export const EventTemplate = {
     doc: ''
 }
 export const WaterfallTemplate = {
+    name: "",
     tasks: []
-
 }
 
 /*

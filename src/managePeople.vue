@@ -47,6 +47,7 @@ export default {
 }
 </script>
 <style scoped lang="scss">
+@use "./CSS/consts.scss" as *;
 div{
     margin:1vw;
     //color:white;
@@ -103,7 +104,7 @@ option{
 }
 .clear{
     width:100%;
-    background-color:slateblue;
+    background-color: var(--back);
     color:white
 }
 .scrollingContainer::-webkit-scrollbar{
