@@ -270,8 +270,7 @@ export default {
                 return [this.$store.state.nonePerson, ...this.$store.state.people, ...this.$store.state.committees]
         }
     },    
-    mounted(){ 
-        if (!this.$store.state.currentUser)this.$store.state.currentUser = this.$store.getters.personByEmail(localStorage.getItem('current_user'))
+    mounted(){         
         document.addEventListener('keydown', this.keyDown)                
         let x= socket;        
         socket.emit('setRoom', this.$store.state.debug == 'debug' ? 'debug': 'production' )         

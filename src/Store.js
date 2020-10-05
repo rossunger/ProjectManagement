@@ -263,8 +263,7 @@ export default createStore({
                     localStorage.setItem("access_token", authResult.accessToken)
                     localStorage.setItem("id_token" ,authResult.idToken)
                     localStorage.setItem("expires_at", expiresAt)
-                    localStorage.setItem("current_user", authResult.idTokenPayload.email)                    
-                    state.currentUser = getters.personByEmail(authResult.idTokenPayload.email)
+                    localStorage.setItem("current_user", authResult.idTokenPayload.email)                                        
                     let page = localStorage.getItem('DC_redirectPage')                
                     localStorage.removeItem('DC_redirectPage')
                     //load data here!!
