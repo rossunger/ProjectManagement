@@ -248,7 +248,7 @@ export default createStore({
             localStorage.setItem('DC_redirectPage', router.currentRoute.value.path) 
             let k = state.auth0.authorize()            
         },
-        async auth0HandleAuthentication({state, dispatch, getters}){            
+        auth0HandleAuthentication({state, dispatch, getters}){            
             state.auth0.parseHash((err, authResult) => {                
                 if(authResult && authResult.accessToken && authResult.idToken){
                     if (!AllowedUsers.includes(authResult.idTokenPayload.email)){               
@@ -269,7 +269,7 @@ export default createStore({
                     localStorage.removeItem('DC_redirectPage')
                     //load data here!!
                     let data = PostService.getChart(state.debug=='debug' ? 'debug' : 'production')
-                    await dispatch('loadChart', data)
+                    dispatch('loadChart', data)
                     router.replace(page)                                        
                 }
                 else if (err){
@@ -405,7 +405,7 @@ export default createStore({
             }else 
                 state.loading = false
         },
-        async loadChart({state, getters, dispatch}, data){            
+        async loadChart({state, getters, dispatch}, data){                        
             state.loading = true                        
             if (data)data = arson.parse(data);            
             else throw 'could not load data!' //: data = arson.parse(await PostService.getChart('current'))        
@@ -420,7 +420,7 @@ export default createStore({
                 state.currentUser = getters.personByName('Ross')
             if (state.currentUser && state.currentUser.theme.back){                
                 document.documentElement.style.setProperty('--back', state.currentUser.theme.back)
-            }
+            }            
             return true
         },
         clearFilters({state}){
