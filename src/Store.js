@@ -248,7 +248,7 @@ export default createStore({
             localStorage.setItem('DC_redirectPage', router.currentRoute.value.path) 
             let k = state.auth0.authorize()            
         },
-        auth0HandleAuthentication({state, dispatch}){            
+        auth0HandleAuthentication({state, dispatch, getters}){            
             state.auth0.parseHash((err, authResult) => {                
                 if(authResult && authResult.accessToken && authResult.idToken){
                     if (!AllowedUsers.includes(authResult.idTokenPayload.email)){               
@@ -264,11 +264,12 @@ export default createStore({
                     localStorage.setItem("id_token" ,authResult.idToken)
                     localStorage.setItem("expires_at", expiresAt)
                     localStorage.setItem("current_user", authResult.idTokenPayload.email)                    
+                    state.currentUser = getters.personByEmail(authResult.idTokenPayload.email)
                     let page = localStorage.getItem('DC_redirectPage')                
                     localStorage.removeItem('DC_redirectPage')
                     //load data here!!
                     let data = PostService.getChart(state.debug=='debug' ? 'debug' : 'production')
-                    dispatch('loadChart', data)
+                    await dispatch('loadChart', data)
                     router.replace(page)                                        
                 }
                 else if (err){
@@ -420,6 +421,7 @@ export default createStore({
             if (state.currentUser && state.currentUser.theme.back){                
                 document.documentElement.style.setProperty('--back', state.currentUser.theme.back)
             }
+            return true
         },
         clearFilters({state}){
             state.viewFilters.leader = []
