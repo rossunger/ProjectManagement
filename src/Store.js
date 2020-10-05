@@ -248,7 +248,7 @@ export default createStore({
             localStorage.setItem('DC_redirectPage', router.currentRoute.value.path) 
             let k = state.auth0.authorize()            
         },
-        auth0HandleAuthentication({state, dispatch, getters}){            
+        async auth0HandleAuthentication({state, dispatch, getters}){            
             state.auth0.parseHash((err, authResult) => {                
                 if(authResult && authResult.accessToken && authResult.idToken){
                     if (!AllowedUsers.includes(authResult.idTokenPayload.email)){               
