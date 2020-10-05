@@ -11,11 +11,11 @@
         <button class="menuTabs" @click="navigateTo('overview')">Overview</button>
         <button class="menuTabs" @click="navigateTo('tasks')">Tasks</button>
         <button class="menuTabs" @click="navigateTo('calendar')">Calendar</button>
-        <button class="menuTabs" @click="navigateTo('events')">Plan Events</button>
-        <button class="menuTabs" @click="navigateTo('gantt')">Gantt Chart</button>
+        <!--button class="menuTabs" @click="navigateTo('events')">Plan Events</button-->
+        <!--button class="menuTabs" @click="navigateTo('gantt')">Gantt Chart</button-->
         <button class="menuTabs" @click="navigateTo('people')">Manage People</button>                
         <button class="menuTabs" @click="navigateTo('paste')">Paste Action Items</button>
-        <button class="menuTabs" @click="copyTasksToClipboard" v-if="$store.state.debug=='debug' ||this.$store.state.currentUser == this.$store.getters.personByName('Ross') ">Copy Tasks To Clipboard</button>
+        <!--button class="menuTabs" @click="copyTasksToClipboard" v-if="$store.state.debug=='debug' ||this.$store.state.currentUser == this.$store.getters.personByName('Ross') ">Tasks To Text</button-->
         <button class="menuTabs" @click="navigateTo('tags')" v-if="$store.state.debug=='debug' ||this.$store.state.currentUser == this.$store.getters.personByName('Ross') ">Edit Tags</button>
         <button class="menuTabs" @click="loadData('production')" v-if="$store.state.debug=='debug'">LOAD DATA FROM PRODUCTION</button>
         <button class="menuTabs" @click="pushDataToProduction" v-if="$store.state.debug=='debug'">PUSH DATA TO PRODUCTION</button>
@@ -88,12 +88,13 @@
     <h1>Setting</h1>
     <button class="menuTabs" v-if="$store.state.authenticated" @click="$store.dispatch('logout')">LOGOUT</button>    
 </div>     
-<div class="reorderingTasks" v-if="reorderingTasks" @click="reorderingTasks=0"></div>           
+<!--div class="reorderingTasks" v-if="reorderingTasks" @click="reorderingTasks=0"></div>           
 <div class="reparentTask" v-if="reparentTask!=0" @click="reparentTask=0">
     <input placeholder="search..." @click.stop style="border: white 1px solid; color:white" @input="doSearchParents($event.target.value)">
     <nested-task-tree-task :reparentingId="reparentTask" @reparent-task="doReparentTask" style="margin-left:40px;" v-for="child in tasks" :key="child" :task="child" />
 
-</div>
+</div-->
+
 <div v-if="$store.state.viewMode=='tasks' && $store.state.groupBy==''" @contextmenu.self.prevent="menu=!menu"
     style="width:100%; height:100%; min-height:100vh" 
     @dblclick.self="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot})">                    
@@ -112,7 +113,7 @@
         </transition-group>                    
 </div>    
 <div v-if="$store.state.viewMode=='tasks' && $store.state.groupBy=='person'"> 
-    <div @dblclick="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot, leader: person})" v-for="person in [$store.state.nonePerson, ...$store.state.people, ...$store.state.committees]" :key="person">
+    <div @dblclick="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot, leader: person})" v-for="person in allLeaders" :key="person">
         <h1 @click.stop="collapsedPeople.has(person) ? collapsedPeople.delete(person) : collapsedPeople.add(person)" style="text-align:center; color:white; background-color: #3333; margin:0px; margin-top:10px">{{collapsedPeople.has(person) ? "+ " : "- "}}{{person.name}}</h1><br>        
         <div v-if="!collapsedPeople.has(person)">
         <task :taskId="task.id" 
@@ -261,6 +262,12 @@ export default {
                 ret = [id, ...ret]
             }                                 
             return ret
+        },
+        allLeaders: function(){                                                
+            if (this.$store.state.currentUser && this.$store.state.currentUser != this.$store.state)
+                return [this.$store.state.nonePerson, this.$store.state.currentUser, ...this.$store.state.people, ...this.$store.state.committees]
+            else
+                return [this.$store.state.nonePerson, ...this.$store.state.people, ...this.$store.state.committees]
         }
     },    
     mounted(){ 
@@ -281,7 +288,7 @@ export default {
         socket.on('changes committed', ()=>console.log('changes saved to DB'))                                        
     },
     methods:{                             
-        keyDown(ev){            
+        keyDown(ev){                  
             if(ev.ctrlKey && ev.key=='z'){
                 /*
                 if (ev.shiftKey)

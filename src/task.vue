@@ -23,7 +23,8 @@
     <button v-if="reorderingTasks && task.parent.tasks && task.parent.tasks[0].id == taskId && reorderingTasks!=taskId" class="reorderHereFirst" @click="$emit('do-reorder-task', 0)">move task here</button>
     
     <div v-if="collapsed" style="margin-top: 30px;">
-        <task v-for="child in task.tasks" :key="child" :class="{done: child.done}"             
+        <!-- sub tasks
+            <task v-for="child in task.tasks" :key="child" :class="{done: child.done}"             
             :style="{backgroundColor: child.color, display:'grid', 'zmargin': '0px', 'padding-bottom': '0px'}"         
             :taskId="child.id"                 
             @stop-transitions="$emit('stop-transitions');"
@@ -32,10 +33,8 @@
             @reparent-task="$emit('reparent-task')"            
             @collapse-all="(t)=>$emit('collapse-all', t)"
             :reorderingTasks="reorderingTasks"
-            :collapseAll="collapseAll"  
-        
-        
-        />
+            :collapseAll="collapseAll"                  
+        / -->
         <!--
             <div @click="$store.dispatch('deleteTaskById', child.id)" style="grid-area: 1 / 6"><i style="color:black;" class="fas fa-times-circle"></i></div>                    
             <div style="grid-area: 1 / 5"><date-button :task="child"/></div>
@@ -50,14 +49,14 @@
             <button style="grid-area: 1 / 1" class="unbutton" @click="$emit('stop-transitions'); $store.state.viewRoot=child.id"><i class="fas fa-search-plus"></i></button>                                
         
         </div -->   
-        <div style="display: inline-block; text-align:center; width:96%; margin:4px; border-radius:10px; border: 1px #999 solid; height:20px; background-color: #DDD" @click="$store.dispatch('createTask', {parent:task})">
+        <!--div style="display: inline-block; text-align:center; width:96%; margin:4px; border-radius:10px; border: 1px #999 solid; height:20px; background-color: #DDD" @click="$store.dispatch('createTask', {parent:task})">
             +
-        </div>      
+        </div-->      
         <task-details :task="task" />
         
     </div>                    
     <button v-if="reorderingTasks && reorderingTasks!=taskId" class="reorderHere" @click="$emit('do-reorder-task', task.id)">move task here</button>
-    <button v-if="reorderingTasks && reorderingTasks==taskId" class="reorderHere" @click="$store.dispatch('deleteTaskById', taskId); $emit('do-reorder-task')">DELETE TASK</button>
+    <button v-if="reorderingTasks && reorderingTasks==taskId" class="reorderHere" @click="$emit('do-reorder-task'); $store.dispatch('deleteTaskById', taskId);">DELETE TASK</button>
 </div>
 </template>
 <script>
@@ -69,7 +68,7 @@ import taskDetails from './taskDetails'
 export default {
     name: "task",
     components: {dateButton, taskDetails, selectBox},
-    props: { taskId: Number, reorderingTasks: Number, collapseAll:Number},
+    props: { taskId: Number, reorderingTasks: {type: Number, default: 0}, collapseAll:{type: Number, default: 0}, startCollapsed: {type:Boolean, default:false }},
     data(){        
         return {
             collapsed: false, dblClickTimer: undefined, clickCount: 0,            
@@ -87,6 +86,9 @@ export default {
                 else this.collapsed = false
             }
         }
+    },
+    mounted(){
+        this.collapsed=this.startCollapsed;
     },
     methods:{
         doClick(ev){            
@@ -163,5 +165,4 @@ export default {
 </script>
 <style scoped lang="scss">
 @use "./CSS/task.scss" as *;
-
 </style>

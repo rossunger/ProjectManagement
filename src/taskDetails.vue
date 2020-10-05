@@ -11,7 +11,7 @@
             @changed="(type)=>task.type = type" />           
         <select-box style="display: inline-block; min-width:45%; width: 250px; max-width:99%" :array="[...$store.state.people, ...$store.state.committees]" 
             :showOne="true" :selected="[task.leader]" 
-            @changed="(leader)=>task.leader = leader" />     
+            @changed="(leader)=>task.leader = $store.getters.personByName(leader) || $store.getters.committeeByName(leader)" />     
         </div>
         <!--select @change="set(task, 'leader', $store.getters.personByName($event.target.value) || $store.getters.committeeByName($event.target.value)  )">
             <option v-for="person in [$store.state.nonePerson, ...$store.state.people, ...$store.state.committees]" :key="person" :value="person.name" :selected="task.leader==person">{{person.name}}</option>

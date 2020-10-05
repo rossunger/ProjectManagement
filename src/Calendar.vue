@@ -1,12 +1,16 @@
 <template>  
-<div class="main-content">       
+<div class="main-content">    
+    <div v-if="$store.getters.taskById(editTask)!=$store.state" class="editTask" @click="editTask=0">
+        <div style="margin:auto; padding-top: 100px; width:fit-content">
+            <task ref="task" :taskId="editTask" style="position: relative" @click.stop :startCollapsed="true" />              
+        </div>                                                
+    </div>   
     <div :style="{color: '#5598','line-height':'30px','text-align': 'center', 'z-index':20,left: i*(100/7)+'vw', top: '0px', position:'fixed', width:100/7+'vw', height:'30px', 'background':'tranparent', outline: '1px grey '}"  v-for="(theday, i) in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" :key="theday">        
         {{theday}}
     </div>
-    <div @click="reordering=0" class="date"  v-for="d in 356" :key="d" @dblclick.self="createTaskOnDay(d)" >            
-        <div class="back" :style="calculateStyle(d)"> </div>
-        <div class="moveHere" v-if="reordering && !($store.getters.taskById(reordering).due.toDateString() == new Date(calendarStart + ((d-1)*24*60*60*1000)).toDateString())" @click="$store.getters.taskById(reordering).due = new Date(calendarStart+((d-1) * 1000*60*60*24)); reordering=0;">Move here</div>                
-        {{dayOfTheMonth(d)}}
+    <div class="date"  v-for="d in 356" :key="d" @dblclick.self="createTaskOnDay(d)" >            
+        <div class="back" :style="calculateStyle(d)"> </div>        
+         {{dayOfTheMonth(d)}}
         <div class="month" v-if="dayOfTheMonth(d)==1">{{monthOfTheYear(d)}}</div>
         <div class="events" @dblclick.stop.self="createTaskOnDay(d)">
             <div v-if="$store.getters.getTasksOnDate(new Date(calendarStart+((d-1) * 1000*60*60*24))).length > 4" 
@@ -15,9 +19,7 @@
             </div>
             <div class="event" :style="{top: (i-1)*15 + '%', 'background-color': e.tags.has('event') ? eventColor : e.tags.has('meeting') ? meetingColor: ''}" v-for="(e, i) in $store.getters.filterTasks(undefined, $store.getters.getTasksOnDate(new Date(calendarStart+((d-1) * 1000*60*60*24))))" :key="e">
                 <div style="position:relative;">
-                    <input @contextmenu.prevent="editTask(e.id)" :value="e.name" @input="e.name=$event.target.value" style="text-align:center; font-size:1vw; width:100%">
-                    <button v-if="reordering == e.id" @click="$store.dispatch('deleteTaskById', reordering); reordering=false;" style="position:absolute; right:1px; top:1px; font-size:9px; border:none; padding: 2px 5px; border-radius:50%">x</button>                    
-                    <!--div @click="reordering=e.id" v-if="reordering == 0" style="position:absolute; right:4px; top: 33%;"><i class="fas fa-arrows-alt"></i></div-->
+                    <input @contextmenu.prevent="editTask=e.id" :value="e.name" @input="e.name=$event.target.value" style="text-align:center; font-size:1vw; width:100%">                    
                 </div>
                 
             </div>
@@ -44,11 +46,13 @@
 
 <script>
 import DateTime from "./RossUtils.js"
+import Task from "./task"
 export default {    
-    name: "calendar",
+    name: "calendar", components:{Task},
     data(){
         return{
-            dragging:"", menu: false, reordering: false, eventColor: '#DD3', meetingColor: '#7DF'
+            dragging:"", menu: false, reordering: false, eventColor: '#DD3', meetingColor: '#7DF',
+            editTask:false,
         }
     },
     computed: {
@@ -83,11 +87,8 @@ export default {
         },
         createTaskOnDay(d){
             let due = new Date(this.calendarStart+ ((d-1)*1000*60*60*24))          
-            this.$store.dispatch('createTask', {due, tags: ['event']})
-        },
-        editTask(id){
-            this.reordering=id;
-        }
+            this.$store.dispatch('createTask', {due})
+        },        
     },
 }
 
@@ -166,7 +167,7 @@ body {
 }
 .events{
     //-ms-overflow-style: none;  /* Internet Explorer 10+ */
-    //scrollbar-width: none;  /* Firefox */
+    //scrollbar-width: none;  /* Firefox */    
     overflow-y:scroll; 
     height:75%;
     
@@ -185,5 +186,11 @@ body {
     z-index:20;
     position:absolute
 }
-
+.editTask{
+    width: 100vw;
+    height: 100vh;
+    position:fixed;
+    background-color: #0009;
+    z-index:100;
+}
 </style>
