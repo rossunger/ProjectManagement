@@ -36,7 +36,7 @@
             <div v-if="editing" @click="setDoc(project)" style="position:absolute; right:65px; bottom:5px; background-color: #FFF3; padding:5px; border-radius:10px;">Set Link</div>
         </div>
     </div>  
-    <div v-if="$store.state.debug=='debug' || $store.state.currentUser == $store.getters.personByNam('Ross')" class="button" style="font-size:6px; line-height:8px; padding-top:4px; margin-left:20px; display:inline-block" @click="editing=!editing">{{editing ? "Done Editing" : "Edit Links"}}</div>  
+    <div v-if="$store.state.debug=='debug' || $store.state.currentUser == $store.getters.personByName('Ross')" class="button" style="font-size:6px; line-height:8px; padding-top:4px; margin-left:20px; display:inline-block" @click="editing=!editing">{{editing ? "Done Editing" : "Edit Links"}}</div>  
 </div>
 </template>
 <script>
