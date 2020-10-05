@@ -42,7 +42,7 @@ const router = createRouter({
 })
 router.beforeEach((to, from,next)=>{    
     let routerAuthCheck = false     
-    if(!store.state.currentUser) $store.state.currentUser = this.$store.getters.personByEmail(localStorage.getItem('current_user')) || undefined
+    if(!store.state.currentUser) store.state.currentUser = store.getters.personByEmail(localStorage.getItem('current_user')) || undefined
     if (localStorage.getItem('access_token') && localStorage.getItem('id_token') && localStorage.getItem('expires_at')){        
         let expires_at = JSON.parse(localStorage.getItem('expires_at'))
         routerAuthCheck = new Date().getTime() < expires_at
