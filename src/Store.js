@@ -256,8 +256,7 @@ export default createStore({
                 if(authResult && authResult.accessToken && authResult.idToken){
                     if (!AllowedUsers.includes(authResult.idTokenPayload.email)){               
                         alert('Invalid user. Please try a different account')
-                        dispatch('logout')
-                        router.replace('/')
+                        dispatch('logout')                        
                         return
                     }
                     let expiresAt = JSON.stringify(
