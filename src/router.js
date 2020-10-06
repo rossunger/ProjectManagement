@@ -42,13 +42,14 @@ const router = createRouter({
 })
 router.beforeEach((to, from,next)=>{    
     let routerAuthCheck = false     
-    if(!store.state.currentUser) store.state.currentUser = store.getters.personByEmail(localStorage.getItem('current_user')) || undefined
+    if(store.state.authenticated && !store.state.currentUser) 
+        store.state.currentUser = store.getters.personByEmail(localStorage.getItem('current_user')) || location.refresh()
     if (localStorage.getItem('access_token') && localStorage.getItem('id_token') && localStorage.getItem('expires_at')){        
         let expires_at = JSON.parse(localStorage.getItem('expires_at'))
         routerAuthCheck = new Date().getTime() < expires_at
     }     
     store.state.authenticated = routerAuthCheck                    
-    if (store.state.debug =='debug') store.state.authenticated = true;
+  //  if (store.state.debug =='debug') store.state.authenticated = true;
     if (to.matched.some(record=>record.path == "/auth0callback")){                                    
         store.dispatch('auth0HandleAuthentication')        
         next(false)

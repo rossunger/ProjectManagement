@@ -95,7 +95,10 @@ export default createStore({
         },     
         tasksSortedBy:(state, getters) => (tasks = getters.allTasks, sortBy) => {                        
             if (!sortBy) sortBy = state.sortBy
-            return tasks.sort((a,b)=>{return a[sortBy[0]] - b[sortBy[0]]})
+            return tasks.sort((a,b)=>{
+                if (b[sortBy[0]] == undefined) return -1
+                return a[sortBy[0]] - b[sortBy[0]]}
+            )
             /*
             let sort0 = []
             if (sortBy[0]){
@@ -404,7 +407,8 @@ export default createStore({
             }else 
                 state.loading = false
         },
-        async loadChart({state, getters, dispatch}, data){                        
+        async loadChart({state, getters, dispatch}, data){                                    
+            data = await data            
             state.loading = true                        
             if (data)data = arson.parse(data);            
             else throw 'could not load data!' //: data = arson.parse(await PostService.getChart('current'))        

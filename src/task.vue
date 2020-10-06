@@ -1,11 +1,11 @@
 <template>
 <div style="position:flex;" :class="{task: true, done: task.done, moving: task.id==reorderingTasks, reordering: reorderingTasks}">    
-    <div v-if="reorderingTasks==0" class="taskTopRight" @contextmenu.prevent="$emit('start-reorder-task', task.id)">
+    <div v-if="reorderingTasks==0" class="taskTopRight">
         <div @click="doDeleteTask($event, task.id)" style="grid-area: 1 / 7"><i style="color:black;" class="fas fa-times-circle"></i></div>        
         <div @click="doClick" v-if="collapsed" style="grid-area: 1 / 6"><i style="color:black;" class="fas fa-chevron-circle-down"></i></div>
         <div @click="doClick" v-if="!collapsed" style="grid-area: 1 / 6"><i style="color:black;" class="fas fa-chevron-circle-left"></i></div>        
         <div style="grid-area: 1 / 5">
-            <date-button :task="task" @contextmenu.stop/>
+            <date-button :task="task" />
         </div>
         <button style="grid-area: 1 / 4" class="unbutton" v-if="!task.done" @click="stopTask(task, true)"><i class="fas fa-clipboard-check"></i></button>
         <button style="grid-area: 1 / 3"  class="unbutton" v-if="!task.done && !task.started" @click="startTask(task)"><i class="fas fa-stopwatch"></i></button>    

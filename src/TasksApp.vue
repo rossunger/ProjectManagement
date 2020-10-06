@@ -96,8 +96,7 @@
 </div-->
 
 <div v-if="$store.state.viewMode=='tasks' && $store.state.groupBy==''" @contextmenu.self.prevent="menu=!menu"
-    style="width:100%; height:100%; min-height:100vh" 
-    @dblclick.self="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot})">                    
+    style="width:100%; height:100%; min-height:100vh">                    
     <transition-group :name="allowTransition && 'slide-fade' || ''" v-on:after-leave="allowTransition=false">    
     <task :taskId="task.id" 
         v-for="task in tasksTree" :key="task"     
@@ -110,11 +109,18 @@
         @collapse-all="(t)=>{if(collapseAll%2==t)collapseAll+=2; else collapseAll++;}"
         :collapseAll="collapseAll"        
     />    
-        </transition-group>                    
+    </transition-group>     
+    <div style="text-align: center">
+            <button style="width:25px; height:25px;color:white; margin-top:2px; background-color: #0002" 
+                @click.self="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot})">+</button>
+        </div>               
+    
+    
 </div>    
 <div v-if="$store.state.viewMode=='tasks' && $store.state.groupBy=='person'"> 
-    <div @dblclick="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot, leader: person})" v-for="person in allLeaders" :key="person">
-        <h1 @click.stop="collapsedPeople.has(person) ? collapsedPeople.delete(person) : collapsedPeople.add(person)" style="text-align:center; color:white; background-color: #3333; margin:0px; margin-top:10px">{{collapsedPeople.has(person) ? "+ " : "- "}}{{person.name}}</h1><br>        
+    <div v-for="person in allLeaders" :key="person">
+        <h1 @click.stop="collapsedPeople.has(person) ? collapsedPeople.delete(person) : collapsedPeople.add(person)" style="text-align:center; color:white; background-color: #3333; margin:0px; margin-top:10px">{{collapsedPeople.has(person) ? "+ " : "- "}}{{person.name}}</h1>        
+        <br>        
         <div v-if="!collapsedPeople.has(person)">
         <task :taskId="task.id" 
         v-for="task in $store.getters.tasksSortedBy($store.getters.filterTasks(undefined, $store.getters.tasksByPerson(person)))" :key="task"     
@@ -128,10 +134,13 @@
         :collapseAll="collapseAll"        />            
         
         </div>
+        <div style="text-align: center">
+            <button style="width:25px; height:25px;color:white; margin-top:2px; background-color: #0002" @click="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot, leader: person})">+</button>
+        </div>
     </div>
 </div>
 <div v-if="$store.state.viewMode=='tasks' && $store.state.groupBy=='tag'"> 
-    <div @dblclick="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot, tags: [tag]})" v-for="tag in $store.state.tags" :key="tag">
+    <div v-for="tag in $store.state.tags" :key="tag">
         <h1 @click="collapsedTags.has(tag) ? collapsedTags.delete(tag) : collapsedTags.add(tag)" style="text-align:center; color:white; background-color: #3333">{{collapsedTags.has(tag) ? "+ " : "- "}}{{tag}}</h1><br>        
         <div v-if="!collapsedTags.has(tag)">
             <task :taskId="task.id" 
@@ -145,6 +154,11 @@
                 @collapse-all="(t)=>{if(collapseAll%2==t)collapseAll+=2; else collapseAll++;}"
                 :collapseAll="collapseAll"        />            
         </div>
+        <div style="text-align: center">
+            <button style="width:25px; height:25px;color:white; margin-top:2px; background-color: #0002" 
+                @click="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot, tags: [tag]})">+</button>
+        </div>
+        
     </div>
 </div>
 <div v-if="$store.state.viewMode=='tags'">    
