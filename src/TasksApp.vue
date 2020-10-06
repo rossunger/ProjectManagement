@@ -111,7 +111,7 @@
     />    
     </transition-group>     
     <div style="text-align: center">
-            <button style="width:25px; height:25px;color:white; margin-top:2px; background-color: #0002" 
+            <button class="addTask" 
                 @click.self="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot})">+</button>
         </div>               
     
@@ -135,7 +135,7 @@
         
         </div>
         <div style="text-align: center">
-            <button style="width:25px; height:25px;color:white; margin-top:2px; background-color: #0002" @click="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot, leader: person})">+</button>
+            <button class="addTask">+</button>
         </div>
     </div>
 </div>
@@ -155,7 +155,7 @@
                 :collapseAll="collapseAll"        />            
         </div>
         <div style="text-align: center">
-            <button style="width:25px; height:25px;color:white; margin-top:2px; background-color: #0002" 
+            <button class="addTask" 
                 @click="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot, tags: [tag]})">+</button>
         </div>
         
@@ -497,5 +497,14 @@ a{
 }
 .sortBy option{
     background-color:#000B;
+}
+.addTask{
+    width:125px; 
+    height:25px;
+    color:white; 
+    margin-top:6px; 
+    background-color: #0004;
+    border-radius:10px;
+    border: none;
 }
 </style>
