@@ -135,7 +135,8 @@
         
         </div>
         <div style="text-align: center">
-            <button class="addTask">+</button>
+            <button class="addTask"
+                @click="$store.dispatch('createTask', {name:'newTask', parent: $store.getters.viewRoot, leader: person})">+</button>
         </div>
     </div>
 </div>

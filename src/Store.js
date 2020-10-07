@@ -58,8 +58,8 @@ export default createStore({
         tasks:[
             
         ],        
-        taskTypes: ['(none)', 'Brainstorm', 'Draft', 'Research', 'Contact', 'Review/Approve',
-        'Go Somewhere', 'Choose',  'Edit/Refine/Finalize', 'Make/Move physical things', 
+        taskTypes: ['(none)', 'Brainstorm', 'Draft', 'Research', 'Contact/Send', 'Review/Approve',
+        'Go Somewhere/Meet', 'Choose',  'Edit/Refine/Finalize', 'Make/Move physical things', 
         'Calculate', 'List',], 
         people: [], 
         nonePerson: {name: '(unassigned)', committees: [], email: ''},
